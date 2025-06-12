@@ -109,8 +109,8 @@ void demo_file_output_observer() {
     logger.disable_console();
     
     try {
-        // Create file observer that writes to "demo_log.txt"
-        auto fileObserver = std::make_shared<FileObserver>("demo_log.txt", false); // overwrite mode
+        // Create file observer that writes to "demo_basic.log"
+        auto fileObserver = std::make_shared<FileObserver>("demo_basic.log", false); // overwrite mode
         
         std::cout << "Created file observer writing to: " << fileObserver->getFilename() << std::endl;
         
@@ -136,7 +136,7 @@ void demo_file_output_observer() {
         logger.info("This message appears only on console (not in file)");
         logger.disable_console();
         
-        std::cout << "Demo completed. Check 'demo_log.txt' for the logged messages." << std::endl;
+        std::cout << "Demo completed. Check 'demo_basic.log' for the logged messages." << std::endl;
         
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
@@ -154,7 +154,7 @@ void demo_raii_file_observer() {
     
     try {
         // Create file observer for append mode
-        auto fileObserver = std::make_shared<FileObserver>("demo_log_raii.txt", true); // append mode
+        auto fileObserver = std::make_shared<FileObserver>("demo_raii.log", true); // append mode
         
         std::cout << "Created RAII file observer writing to: " << fileObserver->getFilename() << std::endl;
         
@@ -173,7 +173,7 @@ void demo_raii_file_observer() {
         logger.enable_console();
         logger.info("Message after RAII scope - not in file");
         
-        std::cout << "RAII demo completed. Check 'demo_log_raii.txt' for the logged messages." << std::endl;
+        std::cout << "RAII demo completed. Check 'demo_raii.log' for the logged messages." << std::endl;
         
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
@@ -261,8 +261,8 @@ int main() {
     
     std::cout << "\n=== Demo Summary ===" << std::endl;
     std::cout << "The file observer demo has created several log files:" << std::endl;
-    std::cout << "1. demo_log.txt - Basic file logging demo" << std::endl;
-    std::cout << "2. demo_log_raii.txt - RAII observer management demo" << std::endl;
+    std::cout << "1. demo_basic.log - Basic file logging demo" << std::endl;
+    std::cout << "2. demo_raii.log - RAII observer management demo" << std::endl;
     std::cout << "3. demo_general.log - General logging (multiple observers demo)" << std::endl;
     std::cout << "4. demo_errors.log - General logging copy" << std::endl;
     std::cout << "5. demo_errors_only.log - Filtered error messages only" << std::endl;

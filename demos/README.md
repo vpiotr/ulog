@@ -29,13 +29,13 @@ This demo showcases how to implement file output functionality using the observe
 #### Demo Scenarios:
 
 1. **Basic File Output**
-   - Creates a `FileObserver` that writes to `demo_log.txt`
+   - Creates a `FileObserver` that writes to `demo_basic.log`
    - Demonstrates manual observer management (add/remove)
    - Shows console vs file output separation
 
 2. **RAII Observer Management**
    - Uses `ObserverScope` for automatic observer lifecycle management
-   - Writes to `demo_log_raii.txt` in append mode
+   - Writes to `demo_raii.log` in append mode
    - Observer is automatically removed when scope ends
 
 3. **Multiple File Observers**
@@ -75,8 +75,8 @@ make ulog_demo          # For the main demo
 
 After running `demo_file_observer`, the following files will be created:
 
-1. `demo_log.txt` - Basic file logging demo output
-2. `demo_log_raii.txt` - RAII observer management demo output  
+1. `demo_basic.log` - Basic file logging demo output
+2. `demo_raii.log` - RAII observer management demo output  
 3. `demo_general.log` - General logging (all message levels)
 4. `demo_errors.log` - Copy of general logging 
 5. `demo_errors_only.log` - Filtered logging (ERROR and FATAL only)

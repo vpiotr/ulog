@@ -53,11 +53,11 @@ if [ $MAIN_DEMO_RESULT -eq 0 ] && [ $FILE_OBSERVER_DEMO_RESULT -eq 0 ]; then
     echo "=== All demos completed successfully! ==="
     echo ""
     echo "Generated log files from file observer demo:"
-    if [ -f "demo_log.txt" ]; then
-        echo "1. demo_log.txt"
+    if [ -f "demo_basic.log" ]; then
+        echo "1. demo_basic.log"
     fi
-    if [ -f "demo_log_raii.txt" ]; then
-        echo "2. demo_log_raii.txt"
+    if [ -f "demo_raii.log" ]; then
+        echo "2. demo_raii.log"
     fi
     if [ -f "demo_general.log" ]; then
         echo "3. demo_general.log"
