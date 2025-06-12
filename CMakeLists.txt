@@ -98,6 +98,11 @@ add_executable(demo_exception_formatting
 )
 target_link_libraries(demo_exception_formatting ulog)
 
+add_executable(demo_container_formatting
+    demos/demo_container_formatting.cpp
+)
+target_link_libraries(demo_container_formatting ulog)
+
 # Add tests to CTest
 add_test(NAME test_logger COMMAND test_logger)
 add_test(NAME test_buffer COMMAND test_buffer)

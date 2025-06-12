@@ -109,7 +109,128 @@ This demo demonstrates various approaches to customize formatting in ulog:
    - Log level checking for expensive operations
    - String conversion optimization tips
 
-### 5. demo_debug_scope.cpp
+### 5. demo_container_formatting.cpp
+**Container Formatting Demo** - Demonstrates manual formatting approaches for standard containers.
+
+This demo showcases recommended patterns for logging standard library containers using helper functions. Since ulog focuses on performance and doesn't include built-in container formatting, this demo provides practical examples of manual formatting approaches:
+
+#### Features:
+- **Helper Function Pattern**: Demonstrates the recommended approach using manual formatting functions
+- **Standard Container Support**: Examples for std::vector, std::pair, and std::map
+- **Nested Container Handling**: Shows how to format complex nested containers like vector of pairs
+- **Performance-Oriented**: Manual approach avoids overhead of automatic container detection
+- **Extensible Pattern**: Easy to extend for additional container types
+- **Step-by-Step Approach**: Clear demonstration of building container formatting capabilities
+
+#### Demo Scenarios:
+
+1. **Vector Formatting**
+   - std::vector<int> with bracket notation [1, 2, 3, 4, 5]
+   - Template-based helper function for type flexibility
+   - Comma-separated element display
+
+2. **Pair Formatting**
+   - std::pair<int, std::string> with parentheses notation (42, "Alice")
+   - Generic template supporting different pair types
+   - Clean key-value representation
+
+3. **Map Formatting**
+   - std::map<std::string, int> with JSON-like notation {"Alice": 95, "Bob": 87}
+   - Iterator-based approach for efficient traversal
+   - Key-value separator formatting
+
+4. **Nested Container Formatting**
+   - std::vector<std::pair<std::string, int>> combining multiple patterns
+   - Demonstrates composition of formatting functions
+   - Complex data structure representation
+
+5. **Individual Element Access**
+   - Shows alternative approach using structured bindings
+   - Demonstrates when individual logging might be preferred
+   - Performance comparison with bulk formatting
+
+#### Helper Function Examples:
+
+```cpp
+// Vector formatting
+template<typename T>
+std::string format_vector(const std::vector<T>& vec);
+
+// Pair formatting  
+template<typename T1, typename T2>
+std::string format_pair(const std::pair<T1, T2>& p);
+
+// Map formatting
+template<typename Key, typename Value>
+std::string format_map(const std::map<Key, Value>& m);
+
+// Nested container formatting
+template<typename T1, typename T2>
+std::string format_vector_of_pairs(const std::vector<std::pair<T1, T2>>& vec);
+```
+
+#### Use Cases:
+- **Data Structure Debugging**: Quick visualization of container contents
+- **Algorithm Verification**: Checking intermediate results in data processing
+- **Configuration Logging**: Displaying settings stored in containers
+- **Performance Analysis**: Logging data structure states for optimization
+
+### 6. demo_auto_flushing.cpp
+**AutoFlushingScope RAII Demo** - Demonstrates automatic logger flushing using RAII pattern.
+
+This demo showcases the AutoFlushingScope class which provides automatic flushing of loggers when scopes exit, ensuring log data is persisted even in the presence of exceptions or early returns:
+
+#### Features:
+- **RAII Auto-Flushing**: Automatic logger flushing when scope exits
+- **Exception Safety**: Ensures flushing occurs even during exception unwinding
+- **Nested Scope Support**: Proper handling of multiple nested AutoFlushingScope instances
+- **Multiple Logger Support**: Independent flushing for different loggers
+- **FlushObserver Integration**: Demonstrates tracking of flush operations for debugging
+- **Zero Overhead**: No performance impact when auto-flushing is not needed
+
+#### Demo Scenarios:
+
+1. **Basic AutoFlushingScope Usage**
+   - Simple scope creation with automatic entry/exit flushing
+   - FlushObserver tracks flush operations for verification
+   - RAII ensures proper cleanup without manual flush calls
+
+2. **Nested AutoFlushingScope Usage**
+   - Demonstrates multiple levels of nested scopes
+   - Each scope independently flushes its logger on exit
+   - Proper ordering and counting of flush operations
+
+3. **Multiple Logger AutoFlushingScope**
+   - Uses different AutoFlushingScope instances for different loggers
+   - Independent flushing behavior per logger
+   - Separate flush tracking for each logger
+
+4. **Exception Safety Testing**
+   - Tests RAII behavior during exception handling
+   - Ensures flush occurs despite thrown exceptions
+   - Demonstrates robustness in error conditions
+
+5. **FlushObserver Integration**
+   - Custom observer class for tracking flush operations
+   - Flush counting and verification capabilities
+   - Debugging support for flush behavior analysis
+
+#### AutoFlushingScope Features:
+
+- **Automatic Lifecycle Management**: Constructor/destructor handle flush timing
+- **Exception Safe**: Uses RAII to guarantee flushing even during stack unwinding
+- **Lightweight**: Minimal overhead when auto-flushing is not required
+- **Thread Safe**: Works correctly with ulog's thread-safe logger implementation
+- **Composable**: Can be combined with other RAII patterns and observers
+
+#### Use Cases:
+- **Critical Section Logging**: Ensure logs are persisted before leaving important code sections
+- **Error Recovery**: Guarantee log data is written before error handling begins
+- **Transaction Boundaries**: Flush logs at the end of logical transactions
+- **Resource Management**: Ensure logging data persistence alongside other resource cleanup
+- **Testing and Debugging**: Verify flush behavior and timing in unit tests
+
+### 7. demo_debug_scope.cpp
 **DebugScope RAII Demo** - Demonstrates the DebugScope pattern with observer integration.
 
 This demo showcases a custom DebugScope class that automatically logs "Entering: x" and "Exiting: x" messages for labeled scopes using RAII pattern combined with observer management:
@@ -149,7 +270,7 @@ This demo showcases a custom DebugScope class that automatically logs "Entering:
    - Demonstrates when scope messages appear/disappear
    - Useful for production vs debug environments
 
-### 6. demo_cerr_observer.cpp
+### 8. demo_cerr_observer.cpp
 **Cerr Observer Demo** - Demonstrates logging errors to stderr via observer.
 
 This demo showcases how to create a custom observer that filters error messages and redirects them to stderr (standard error) while allowing normal messages to go to stdout (standard output):
@@ -195,7 +316,7 @@ This demo showcases how to create a custom observer that filters error messages 
 - **Production Monitoring**: Facilitates error-specific alerting and monitoring
 - **Development Debugging**: Helps developers focus on error output during debugging
 
-### 7. demo_exception_formatting.cpp
+### 9. demo_exception_formatting.cpp
 **Exception Formatting Demo** - Demonstrates automatic formatting of exceptions for enhanced error logging.
 
 This demo showcases how to create rich, informative exception logs using custom formatting patterns, enabling detailed error analysis and debugging:
@@ -252,14 +373,15 @@ This demo showcases how to create rich, informative exception logs using custom 
 ```bash
 mkdir build && cd build
 cmake ..
-make demo_file_observer      # For the file observer demo
-make demo_log_level_filtering # For the log level filtering demo
-make demo_custom_formatting  # For the custom types demo
-make demo_auto_flushing      # For the auto-flushing scope demo
-make demo_debug_scope        # For the debug scope RAII demo
-make demo_cerr_observer      # For the cerr observer demo
-make demo_exception_formatting # For the exception formatting demo
-make ulog_demo              # For the main demo
+make demo_file_observer         # For the file observer demo
+make demo_log_level_filtering   # For the log level filtering demo
+make demo_custom_formatting     # For the custom types demo
+make demo_container_formatting  # For the container formatting demo
+make demo_auto_flushing         # For the auto-flushing scope demo
+make demo_debug_scope           # For the debug scope RAII demo
+make demo_cerr_observer         # For the cerr observer demo
+make demo_exception_formatting  # For the exception formatting demo
+make ulog_demo                  # For the main demo
 ```
 
 ### Run the demos:
@@ -272,6 +394,9 @@ make ulog_demo              # For the main demo
 
 # Run the custom types demo
 ./demo_custom_formatting
+
+# Run the container formatting demo
+./demo_container_formatting
 
 # Run the auto-flushing scope demo
 ./demo_auto_flushing
