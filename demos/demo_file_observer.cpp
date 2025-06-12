@@ -160,7 +160,7 @@ void demo_raii_file_observer() {
         
         // RAII observer management
         {
-            ulog::observer_scope scope(logger, fileObserver);
+            ulog::ObserverScope scope(logger, fileObserver);
             
             logger.info("RAII scope started");
             logger.debug("Processing within RAII scope");

@@ -123,7 +123,7 @@ void demo_observer_pattern() {
     
     // RAII observer management
     {
-        ulog::observer_scope scope(logger, observer);
+        ulog::ObserverScope scope(logger, observer);
         logger.info("RAII scoped message 1");
         logger.debug("RAII scoped message 2");
     } // Observer automatically removed here

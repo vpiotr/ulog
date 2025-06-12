@@ -94,7 +94,7 @@ logger.remove_observer(observer);
 
 // RAII observer management
 {
-    ulog::observer_scope scope(logger, observer);
+    ulog::ObserverScope scope(logger, observer);
     logger.info("This will be observed");
 } // Observer automatically removed
 ```
@@ -227,12 +227,12 @@ Abstract base class for log observers:
 - `handleNewMessage()` - Called for each new log message
 - `handleFlush()` - Called when logger is flushed
 
-#### `ulog::observer_scope`
+#### `ulog::ObserverScope`
 
 RAII class for automatic observer management:
 
 ```cpp
-ulog::observer_scope scope(logger, observer); // Adds observer
+ulog::ObserverScope scope(logger, observer); // Adds observer
 // ... observer automatically removed when scope ends
 ```
 

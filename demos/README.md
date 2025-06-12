@@ -21,7 +21,7 @@ This demo showcases how to implement file output functionality using the observe
 #### Features:
 - **FileObserver Class**: A custom observer that writes log entries to files
 - **Basic File Logging**: Simple file output with automatic file creation
-- **RAII Observer Management**: Automatic observer registration/unregistration using `observer_scope`
+- **RAII Observer Management**: Automatic observer registration/unregistration using `ObserverScope`
 - **Multiple File Observers**: Writing to multiple files simultaneously
 - **Filtered Logging**: Custom observers that filter messages by log level
 - **Thread-Safe File Operations**: All file operations are protected with mutexes
@@ -34,7 +34,7 @@ This demo showcases how to implement file output functionality using the observe
    - Shows console vs file output separation
 
 2. **RAII Observer Management**
-   - Uses `observer_scope` for automatic observer lifecycle management
+   - Uses `ObserverScope` for automatic observer lifecycle management
    - Writes to `demo_log_raii.txt` in append mode
    - Observer is automatically removed when scope ends
 
@@ -127,7 +127,7 @@ logger.remove_observer(fileObserver);
 
 // Option 2: RAII management
 {
-    ulog::observer_scope scope(logger, fileObserver);
+    ulog::ObserverScope scope(logger, fileObserver);
     logger.info("This will also be written to app.log");
 } // Observer automatically removed here
 ```

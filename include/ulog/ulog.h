@@ -537,14 +537,14 @@ private:
 /**
  * @brief RAII observer scope for automatic observer management
  */
-class observer_scope {
+class ObserverScope {
 public:
     /**
      * @brief Constructor - automatically adds observer
      * @param logger Logger to add observer to
      * @param observer Observer to add
      */
-    observer_scope(Logger& logger, std::shared_ptr<LogObserver> observer)
+    ObserverScope(Logger& logger, std::shared_ptr<LogObserver> observer)
         : logger_(logger), observer_(observer) {
         logger_.add_observer(observer_);
     }
@@ -552,13 +552,13 @@ public:
     /**
      * @brief Destructor - automatically removes observer
      */
-    ~observer_scope() {
+    ~ObserverScope() {
         logger_.remove_observer(observer_);
     }
     
     // Non-copyable
-    observer_scope(const observer_scope&) = delete;
-    observer_scope& operator=(const observer_scope&) = delete;
+    ObserverScope(const ObserverScope&) = delete;
+    ObserverScope& operator=(const ObserverScope&) = delete;
 
 private:
     Logger& logger_;

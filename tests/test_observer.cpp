@@ -111,7 +111,7 @@ UTEST_FUNC_DEF2(Observer, ScopeRAII) {
     auto observer = std::make_shared<TestObserver>();
     
     {
-        ulog::observer_scope scope(logger, observer);
+        ulog::ObserverScope scope(logger, observer);
         
         // Observer should be registered
         UTEST_ASSERT_EQUALS(observer->registered_loggers.size(), 1);
