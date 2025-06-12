@@ -149,6 +149,52 @@ This demo showcases a custom DebugScope class that automatically logs "Entering:
    - Demonstrates when scope messages appear/disappear
    - Useful for production vs debug environments
 
+### 6. demo_cerr_observer.cpp
+**Cerr Observer Demo** - Demonstrates logging errors to stderr via observer.
+
+This demo showcases how to create a custom observer that filters error messages and redirects them to stderr (standard error) while allowing normal messages to go to stdout (standard output):
+
+#### Features:
+- **CerrObserver Class**: Custom observer that filters ERROR and FATAL messages to stderr
+- **Error Stream Separation**: Normal messages go to stdout, errors go to stderr
+- **RAII Observer Management**: Automatic observer registration/unregistration
+- **Multiple Observer Support**: Combines cerr observer with other observers
+- **Log Level Filtering**: Works correctly with logger-level filtering
+- **Exception Safety**: Ensures proper cleanup during exception handling
+
+#### Demo Scenarios:
+
+1. **Basic Cerr Observer Usage**
+   - Creates observer that redirects ERROR and FATAL messages to stderr
+   - Shows separation between normal output (stdout) and error output (stderr)
+   - Manual observer management with add/remove
+
+2. **RAII Cerr Observer Management**
+   - Uses `ObserverScope` for automatic observer lifecycle management
+   - Demonstrates scope-based error redirection
+   - Observer automatically removed when scope ends
+
+3. **Multiple Observers with Cerr**
+   - Combines cerr observer with message counter observer
+   - Shows multiple observers working together
+   - Statistics tracking alongside error redirection
+
+4. **Log Level Filtering with Cerr**
+   - Tests cerr observer behavior with different log levels
+   - Shows that filtering happens before observer notification
+   - Demonstrates proper interaction between filtering and stderr redirection
+
+5. **Exception Safety**
+   - Tests RAII behavior during exception handling
+   - Ensures stderr redirection works despite exceptions
+   - Demonstrates robustness of observer management
+
+#### Use Cases:
+- **Error Stream Separation**: Allows tools to capture errors separately from normal output
+- **Log Analysis**: Enables separate processing of error and normal log streams
+- **Production Monitoring**: Facilitates error-specific alerting and monitoring
+- **Development Debugging**: Helps developers focus on error output during debugging
+
 ## Building and Running
 
 ### Build the demos:
@@ -160,6 +206,7 @@ make demo_log_level_filtering # For the log level filtering demo
 make demo_custom_formatting  # For the custom types demo
 make demo_auto_flushing      # For the auto-flushing scope demo
 make demo_debug_scope        # For the debug scope RAII demo
+make demo_cerr_observer      # For the cerr observer demo
 make ulog_demo              # For the main demo
 ```
 
@@ -179,6 +226,9 @@ make ulog_demo              # For the main demo
 
 # Run the debug scope RAII demo
 ./demo_debug_scope
+
+# Run the cerr observer demo
+./demo_cerr_observer
 
 # Run the main demo
 ./ulog_demo
