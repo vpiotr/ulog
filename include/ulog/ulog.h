@@ -60,6 +60,7 @@ namespace ulog {
  * @brief Log level enumeration
  */
 enum class LogLevel {
+    OFF = -1,
     TRACE = 0,
     DEBUG = 1,
     INFO = 2,
@@ -75,6 +76,7 @@ enum class LogLevel {
  */
 inline std::string to_string(LogLevel level) {
     switch (level) {
+        case LogLevel::OFF: return "OFF";
         case LogLevel::TRACE: return "TRACE";
         case LogLevel::DEBUG: return "DEBUG";
         case LogLevel::INFO: return "INFO";
@@ -333,7 +335,7 @@ public:
      * @param name Logger name (empty for global logger)
      */
     explicit Logger(const std::string& name = "") 
-        : name_(name), console_enabled_(true), buffer_enabled_(false) {}
+        : name_(name), console_enabled_(true), buffer_enabled_(false), log_level_(LogLevel::INFO) {}
     
     /**
      * @brief Log trace message
@@ -490,6 +492,22 @@ public:
     }
     
     /**
+     * @brief Set log level filter
+     * @param level Minimum log level to process
+     */
+    void set_log_level(LogLevel level) {
+        log_level_ = level;
+    }
+    
+    /**
+     * @brief Get current log level filter
+     * @return Current log level filter
+     */
+    LogLevel get_log_level() const {
+        return log_level_;
+    }
+    
+    /**
      * @brief Get logger name
      * @return Logger name
      */
@@ -498,6 +516,12 @@ public:
 private:
     template<typename... Args>
     void log(LogLevel level, const std::string& format, Args&&... args) {
+        // Check if logging is enabled for this level
+        LogLevel current_level = log_level_;
+        if (current_level == LogLevel::OFF || level < current_level) {
+            return;
+        }
+        
         auto message = MessageFormatter::format(format, std::forward<Args>(args)...);
         auto entry = LogEntry(std::chrono::system_clock::now(), level, name_, message);
         
@@ -530,6 +554,7 @@ private:
     mutable std::mutex mutex_;
     std::atomic<bool> console_enabled_;
     std::atomic<bool> buffer_enabled_;
+    std::atomic<LogLevel> log_level_;
     std::unique_ptr<LogBuffer> buffer_;
     std::vector<std::shared_ptr<LogObserver>> observers_;
 };

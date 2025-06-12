@@ -50,6 +50,9 @@ void demo_basic_logging() {
     // Get named logger
     auto& appLogger = ulog::getLogger("DemoApp");
     
+    // Set log level to TRACE to show all levels in demo
+    appLogger.set_log_level(ulog::LogLevel::TRACE);
+    
     // Test all log levels
     appLogger.trace("Detailed trace information");
     appLogger.debug("Debug information for troubleshooting");

@@ -12,6 +12,7 @@ A fast, simple, and lightweight header-only C++ logging library with console out
 - **Header-only**: Single header file, no compilation required
 - **Fast & Lightweight**: <1000 LOC, optimized for speed and simplicity
 - **Thread-safe**: All operations are thread-safe
+- **Log level filtering**: Built-in filtering by severity level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF)
 - **Flexible formatting**: Support for anonymous (`{?}`) and positional (`{0}`, `{1}`) parameters
 - **Memory buffer**: Optional in-memory log storage with configurable capacity
 - **Observer pattern**: Extensible through custom log observers
@@ -114,6 +115,46 @@ logger.enable_console();
 logger.info("This appears on console again");
 ```
 
+### Log Level Filtering
+
+Control which messages are logged based on their severity level:
+
+```cpp
+auto logger = ulog::getLogger("FilterApp");
+
+// Default level is INFO (logs INFO, WARN, ERROR, FATAL)
+logger.trace("This will NOT appear");  // Filtered out
+logger.debug("This will NOT appear");  // Filtered out
+logger.info("This will appear");
+logger.warn("This will appear");
+
+// Set to TRACE to log all messages
+logger.set_log_level(ulog::LogLevel::TRACE);
+logger.trace("Now this will appear");
+logger.debug("And this will appear");
+
+// Set to ERROR to log only ERROR and FATAL
+logger.set_log_level(ulog::LogLevel::ERROR);
+logger.info("This will NOT appear");   // Filtered out
+logger.error("This will appear");
+
+// Set to OFF to disable all logging
+logger.set_log_level(ulog::LogLevel::OFF);
+logger.fatal("Even this won't appear"); // All messages filtered
+
+// Check current level
+LogLevel current = logger.get_log_level();
+```
+
+Available log levels (in order of severity):
+- `OFF` - No logging
+- `TRACE` - Most verbose
+- `DEBUG` - Debug information
+- `INFO` - General information (default)
+- `WARN` - Warnings
+- `ERROR` - Errors
+- `FATAL` - Fatal errors
+
 ## Installation
 
 ### Method 1: Header-only
@@ -201,6 +242,8 @@ make
 Main logging class with the following methods:
 
 - `trace()`, `debug()`, `info()`, `warn()`, `error()`, `fatal()` - Log messages at different levels
+- `set_log_level(LogLevel level)` - Set minimum log level filter
+- `get_log_level()` - Get current log level filter
 - `enable_buffer(size_t capacity)` - Enable memory buffer with optional capacity limit
 - `disable_buffer()` - Disable memory buffer
 - `clear_buffer()` - Clear buffer contents
@@ -284,6 +327,13 @@ See the `demos/demo_main.cpp` file for comprehensive examples covering:
 - Console control
 - Thread safety demonstration
 - Logger factory usage
+
+See `demos/demo_log_level_filtering.cpp` for log level filtering examples:
+
+- Default behavior with INFO level filtering
+- Setting different log levels (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF)
+- Log level filtering with memory buffers
+- Log level filtering with observers
 
 ## Contributing
 

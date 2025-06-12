@@ -18,6 +18,7 @@ UTEST_FUNC_DEF2(Buffer, EnableDisable) {
 UTEST_FUNC_DEF2(Buffer, Storage) {
     auto& logger = ulog::getLogger("StorageTest");
     logger.disable_console(); // Disable console to avoid output during test
+    logger.set_log_level(ulog::LogLevel::TRACE); // Ensure all messages are logged
     
     logger.enable_buffer(0); // Unlimited capacity
     
@@ -65,6 +66,7 @@ UTEST_FUNC_DEF2(Buffer, Clear) {
 UTEST_FUNC_DEF2(Buffer, Iteration) {
     auto& logger = ulog::getLogger("IterationTest");
     logger.disable_console();
+    logger.set_log_level(ulog::LogLevel::TRACE); // Ensure all messages are logged
     
     logger.enable_buffer(100);
     

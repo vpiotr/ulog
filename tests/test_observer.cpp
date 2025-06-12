@@ -48,6 +48,7 @@ UTEST_FUNC_DEF2(Observer, Registration) {
 UTEST_FUNC_DEF2(Observer, MessageNotification) {
     auto& logger = ulog::getLogger("MessageTest");
     logger.disable_console();
+    logger.set_log_level(ulog::LogLevel::TRACE); // Ensure all messages are logged
     
     auto observer = std::make_shared<TestObserver>();
     logger.add_observer(observer);

@@ -68,6 +68,11 @@ add_executable(demo_file_observer
 )
 target_link_libraries(demo_file_observer ulog)
 
+add_executable(demo_log_level_filtering
+    demos/demo_log_level_filtering.cpp
+)
+target_link_libraries(demo_log_level_filtering ulog)
+
 # Add tests to CTest
 add_test(NAME test_logger COMMAND test_logger)
 add_test(NAME test_buffer COMMAND test_buffer)
