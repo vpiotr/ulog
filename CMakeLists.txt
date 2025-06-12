@@ -57,11 +57,16 @@ add_executable(test_observer
 )
 target_link_libraries(test_observer ulog)
 
-# Demo executable
+# Demo executables
 add_executable(ulog_demo
     demos/demo_main.cpp
 )
 target_link_libraries(ulog_demo ulog)
+
+add_executable(demo_file_observer
+    demos/demo_file_observer.cpp
+)
+target_link_libraries(demo_file_observer ulog)
 
 # Add tests to CTest
 add_test(NAME test_logger COMMAND test_logger)

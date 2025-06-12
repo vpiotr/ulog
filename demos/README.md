@@ -1,0 +1,135 @@
+# ulog Demos
+
+This directory contains demonstration applications showcasing various features of the ulog library.
+
+## Available Demos
+
+### 1. demo_main.cpp
+The main demo application showcasing core ulog features:
+- Basic logging functionality
+- Memory buffer usage
+- Observer pattern
+- Console control
+- Thread safety
+- Logger factory pattern
+
+### 2. demo_file_observer.cpp
+**File Output via Observer Demo** - Implementation of the first todo item.
+
+This demo showcases how to implement file output functionality using the observer pattern. It demonstrates:
+
+#### Features:
+- **FileObserver Class**: A custom observer that writes log entries to files
+- **Basic File Logging**: Simple file output with automatic file creation
+- **RAII Observer Management**: Automatic observer registration/unregistration using `observer_scope`
+- **Multiple File Observers**: Writing to multiple files simultaneously
+- **Filtered Logging**: Custom observers that filter messages by log level
+- **Thread-Safe File Operations**: All file operations are protected with mutexes
+
+#### Demo Scenarios:
+
+1. **Basic File Output**
+   - Creates a `FileObserver` that writes to `demo_log.txt`
+   - Demonstrates manual observer management (add/remove)
+   - Shows console vs file output separation
+
+2. **RAII Observer Management**
+   - Uses `observer_scope` for automatic observer lifecycle management
+   - Writes to `demo_log_raii.txt` in append mode
+   - Observer is automatically removed when scope ends
+
+3. **Multiple File Observers**
+   - Demonstrates multiple observers on the same logger
+   - Creates general log file with all messages
+   - Creates filtered log file with only ERROR and FATAL messages
+   - Shows how to create custom observer subclasses
+
+#### File Observer Features:
+
+- **File Modes**: Support for both append and overwrite modes
+- **Error Handling**: Proper exception handling for file operations
+- **Metadata Logging**: Logs observer registration/unregistration events
+- **Thread Safety**: All file operations are thread-safe
+- **Immediate Flush**: Ensures log entries are written immediately to disk
+
+## Building and Running
+
+### Build the demos:
+```bash
+mkdir build && cd build
+cmake ..
+make demo_file_observer  # For the file observer demo
+make ulog_demo          # For the main demo
+```
+
+### Run the demos:
+```bash
+# Run the file observer demo
+./demo_file_observer
+
+# Run the main demo
+./ulog_demo
+```
+
+### Expected Output Files
+
+After running `demo_file_observer`, the following files will be created:
+
+1. `demo_log.txt` - Basic file logging demo output
+2. `demo_log_raii.txt` - RAII observer management demo output  
+3. `demo_general.log` - General logging (all message levels)
+4. `demo_errors.log` - Copy of general logging 
+5. `demo_errors_only.log` - Filtered logging (ERROR and FATAL only)
+
+## Implementation Details
+
+### FileObserver Class
+
+The `FileObserver` class implements the `ulog::LogObserver` interface:
+
+```cpp
+class FileObserver : public ulog::LogObserver {
+public:
+    explicit FileObserver(const std::string& filename, bool append = true);
+    
+    void handleRegistered(const std::string& logger_name) override;
+    void handleUnregistered(const std::string& logger_name) override;
+    void handleNewMessage(const ulog::LogEntry& entry) override;
+    void handleFlush(const std::string& logger_name) override;
+    
+    // Additional utility methods
+    const std::string& getFilename() const;
+    bool isOpen() const;
+};
+```
+
+### Key Features:
+
+- **Thread Safety**: Uses `std::mutex` to protect file operations
+- **RAII**: Automatically opens file in constructor, closes in destructor
+- **Error Handling**: Throws exceptions for file operation failures
+- **Flexible Modes**: Supports both append and overwrite file modes
+- **Immediate Flush**: Calls `flush()` after each write for data persistence
+
+### Usage Example:
+
+```cpp
+// Create logger
+auto& logger = ulog::getLogger("MyApp");
+
+// Create file observer
+auto fileObserver = std::make_shared<FileObserver>("app.log", true); // append mode
+
+// Option 1: Manual management
+logger.add_observer(fileObserver);
+logger.info("This will be written to app.log");
+logger.remove_observer(fileObserver);
+
+// Option 2: RAII management
+{
+    ulog::observer_scope scope(logger, fileObserver);
+    logger.info("This will also be written to app.log");
+} // Observer automatically removed here
+```
+
+This demo fulfills the first todo item by providing a complete, production-ready implementation of file output via the observer pattern.

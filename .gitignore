@@ -17,6 +17,13 @@
 *.out
 *.app
 
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
 # CMake generated files
 CMakeCache.txt
 CMakeFiles/
