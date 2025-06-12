@@ -396,6 +396,8 @@ See the `demos/` directory for comprehensive examples:
 - `demos/demo_custom_formatting.cpp` - Custom formatting for both primitive and user-defined types including wrapper classes, operator<< overloads, template specialization, container support, and performance tips
 - `demos/demo_auto_flushing.cpp` - RAII auto-flushing scope examples including basic usage, nested scopes, multiple loggers, and exception safety
 - `demos/demo_debug_scope.cpp` - DebugScope RAII pattern with observer integration for automatic scope entry/exit logging, nested scopes, multiple loggers, and exception safety
+- `demos/demo_cerr_observer.cpp` - Error message redirection to stderr via observer pattern with multiple observer support, RAII management, and exception safety
+- `demos/demo_exception_formatting.cpp` - Automatic exception formatting with custom exception wrappers, nested exception handling, system error integration, and real-world scenarios
 
 ## Contributing
 

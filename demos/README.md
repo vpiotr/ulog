@@ -195,6 +195,57 @@ This demo showcases how to create a custom observer that filters error messages 
 - **Production Monitoring**: Facilitates error-specific alerting and monitoring
 - **Development Debugging**: Helps developers focus on error output during debugging
 
+### 7. demo_exception_formatting.cpp
+**Exception Formatting Demo** - Demonstrates automatic formatting of exceptions for enhanced error logging.
+
+This demo showcases how to create rich, informative exception logs using custom formatting patterns, enabling detailed error analysis and debugging:
+
+#### Features:
+- **ExceptionFormatter Wrapper**: Custom wrapper for automatic exception formatting with configurable options
+- **Custom Exception Types**: Examples of creating informative custom exception classes with additional context
+- **Nested Exception Support**: Handling and formatting exception chains with complete causality information
+- **System Error Integration**: Formatting std::system_error and std::filesystem_error types
+- **Real-World Scenarios**: Practical examples including database errors, network failures, and resource management
+- **Performance Considerations**: Best practices for efficient exception logging in production code
+
+#### Demo Scenarios:
+
+1. **Basic Exception Formatting**
+   - Standard exception types (runtime_error, invalid_argument, out_of_range)
+   - Configurable formatting options (type, message, nested exceptions)
+   - Simple wrapper usage for immediate enhanced logging
+
+2. **Custom Exception Types**
+   - DatabaseError with error codes and connection strings
+   - NetworkError with host, port, and timeout information
+   - Specialized formatting using operator<< and ustr::to_string
+
+3. **Nested Exception Handling**
+   - Exception chains with std::throw_with_nested
+   - Recursive nested exception unwrapping and formatting
+   - Complete error causality tracking for complex failures
+
+4. **System Error Integration**
+   - std::system_error formatting with error codes
+   - std::filesystem_error with path and operation context
+   - Platform-specific error message extraction
+
+5. **Real-World Application Scenarios**
+   - Resource initialization failures with fallback strategies
+   - API call retries with progressive error accumulation
+   - Data processing pipelines with context-aware error reporting
+
+6. **Performance Optimization**
+   - Log level checking before expensive exception formatting
+   - Efficient formatter creation and reuse strategies
+   - Best practices for production exception logging
+
+#### Use Cases:
+- **Enhanced Error Debugging**: Rich exception information for faster problem resolution
+- **Production Monitoring**: Detailed error context for automated alerting and analysis
+- **Error Analytics**: Structured exception data for trend analysis and root cause identification
+- **Multi-tier Applications**: Exception propagation with preserved context across service boundaries
+
 ## Building and Running
 
 ### Build the demos:
@@ -207,6 +258,7 @@ make demo_custom_formatting  # For the custom types demo
 make demo_auto_flushing      # For the auto-flushing scope demo
 make demo_debug_scope        # For the debug scope RAII demo
 make demo_cerr_observer      # For the cerr observer demo
+make demo_exception_formatting # For the exception formatting demo
 make ulog_demo              # For the main demo
 ```
 
@@ -229,6 +281,9 @@ make ulog_demo              # For the main demo
 
 # Run the cerr observer demo
 ./demo_cerr_observer
+
+# Run the exception formatting demo
+./demo_exception_formatting
 
 # Run the main demo
 ./ulog_demo

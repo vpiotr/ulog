@@ -93,6 +93,11 @@ add_executable(demo_cerr_observer
 )
 target_link_libraries(demo_cerr_observer ulog)
 
+add_executable(demo_exception_formatting
+    demos/demo_exception_formatting.cpp
+)
+target_link_libraries(demo_exception_formatting ulog)
+
 # Add tests to CTest
 add_test(NAME test_logger COMMAND test_logger)
 add_test(NAME test_buffer COMMAND test_buffer)
