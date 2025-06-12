@@ -109,16 +109,58 @@ This demo demonstrates various approaches to customize formatting in ulog:
    - Log level checking for expensive operations
    - String conversion optimization tips
 
+### 5. demo_debug_scope.cpp
+**DebugScope RAII Demo** - Demonstrates the DebugScope pattern with observer integration.
+
+This demo showcases a custom DebugScope class that automatically logs "Entering: x" and "Exiting: x" messages for labeled scopes using RAII pattern combined with observer management:
+
+#### Features:
+- **DebugScope Class**: RAII class that logs scope entry and exit automatically
+- **Observer Integration**: Custom DebugObserver that tracks scope-related messages
+- **Nested Scope Support**: Demonstrates deeply nested scope logging
+- **Multiple Logger Support**: Shows scope tracking across different loggers
+- **Exception Safety**: Ensures exit logging even when exceptions occur
+- **Conditional Debugging**: Shows how log level filtering affects scope visibility
+
+#### Demo Scenarios:
+
+1. **Basic DebugScope Usage**
+   - Simple scope creation with automatic entry/exit logging
+   - Observer captures and displays scope messages
+   - RAII ensures proper cleanup
+
+2. **Nested DebugScope Usage**
+   - Demonstrates multiple levels of nested scopes
+   - Shows proper ordering of entry/exit messages
+   - Tracks scope depth and hierarchy
+
+3. **Multiple Logger DebugScope**
+   - Uses different loggers for different services
+   - Independent scope tracking per logger
+   - Separate observers for each logger
+
+4. **Exception Safety**
+   - Tests RAII behavior during exception handling
+   - Ensures exit messages are logged despite exceptions
+   - Demonstrates robustness of scope tracking
+
+5. **Conditional DebugScope**
+   - Shows effect of log level filtering on scope visibility
+   - Demonstrates when scope messages appear/disappear
+   - Useful for production vs debug environments
+
 ## Building and Running
 
 ### Build the demos:
 ```bash
 mkdir build && cd build
 cmake ..
-make demo_file_observer     # For the file observer demo
+make demo_file_observer      # For the file observer demo
 make demo_log_level_filtering # For the log level filtering demo
-make demo_custom_formatting      # For the custom types demo
-make ulog_demo             # For the main demo
+make demo_custom_formatting  # For the custom types demo
+make demo_auto_flushing      # For the auto-flushing scope demo
+make demo_debug_scope        # For the debug scope RAII demo
+make ulog_demo              # For the main demo
 ```
 
 ### Run the demos:
@@ -131,6 +173,12 @@ make ulog_demo             # For the main demo
 
 # Run the custom types demo
 ./demo_custom_formatting
+
+# Run the auto-flushing scope demo
+./demo_auto_flushing
+
+# Run the debug scope RAII demo
+./demo_debug_scope
 
 # Run the main demo
 ./ulog_demo

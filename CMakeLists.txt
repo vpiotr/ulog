@@ -83,6 +83,11 @@ add_executable(demo_auto_flushing
 )
 target_link_libraries(demo_auto_flushing ulog)
 
+add_executable(demo_debug_scope
+    demos/demo_debug_scope.cpp
+)
+target_link_libraries(demo_debug_scope ulog)
+
 # Add tests to CTest
 add_test(NAME test_logger COMMAND test_logger)
 add_test(NAME test_buffer COMMAND test_buffer)

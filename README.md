@@ -395,6 +395,7 @@ See the `demos/` directory for comprehensive examples:
 - `demos/demo_log_level_filtering.cpp` - Log level filtering examples with buffers and observers
 - `demos/demo_custom_formatting.cpp` - Custom formatting for both primitive and user-defined types including wrapper classes, operator<< overloads, template specialization, container support, and performance tips
 - `demos/demo_auto_flushing.cpp` - RAII auto-flushing scope examples including basic usage, nested scopes, multiple loggers, and exception safety
+- `demos/demo_debug_scope.cpp` - DebugScope RAII pattern with observer integration for automatic scope entry/exit logging, nested scopes, multiple loggers, and exception safety
 
 ## Contributing
 
