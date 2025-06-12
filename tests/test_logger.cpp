@@ -375,6 +375,198 @@ UTEST_FUNC_DEF2(Logger, AutoFlushingScope) {
     logger.remove_observer(observer);
 }
 
+UTEST_FUNC_DEF2(Logger, CleanMessageBasic) {
+    ConsoleCapture capture;
+    
+    auto& logger = ulog::getLogger("CleanMessageTest");
+    logger.disable_console(); // We'll check the buffer instead
+    logger.enable_buffer();
+    
+    // Test basic control character cleaning
+    std::string message_with_newline = "Message with\nnewline";
+    std::string message_with_tab = "Message with\ttab";
+    std::string message_with_carriage_return = "Message with\rcarriage return";
+    std::string message_with_null = std::string("Message with\0null", 17);
+    
+    logger.info(message_with_newline);
+    logger.info(message_with_tab);
+    logger.info(message_with_carriage_return);
+    logger.info(message_with_null);
+    
+    auto buffer = logger.buffer();
+    UTEST_ASSERT_NOT_NULL(buffer);
+    UTEST_ASSERT_EQUALS(buffer->size(), 4);
+    
+    std::vector<std::string> messages;
+    for (auto it = buffer->cbegin(); it != buffer->cend(); ++it) {
+        messages.push_back(it->message);
+    }
+    
+    // Check that newline is replaced with space
+    UTEST_ASSERT_NOT_EQUALS(messages[0].find("Message with newline"), std::string::npos);
+    
+    // Check that tab is replaced with space
+    UTEST_ASSERT_NOT_EQUALS(messages[1].find("Message with tab"), std::string::npos);
+    
+    // Check that carriage return is replaced with space
+    UTEST_ASSERT_NOT_EQUALS(messages[2].find("Message with carriage return"), std::string::npos);
+    
+    // Check that null is replaced with \x00 (not whitespace)
+    UTEST_ASSERT_NOT_EQUALS(messages[3].find("Message with\\x00null"), std::string::npos);
+    
+    logger.disable_buffer();
+}
+
+UTEST_FUNC_DEF2(Logger, CleanMessageDisabled) {
+    ConsoleCapture capture;
+    
+    auto& logger = ulog::getLogger("CleanMessageDisabledTest");
+    logger.disable_console(); // We'll check the buffer instead
+    logger.enable_buffer();
+    
+    // Disable message cleaning
+    logger.disable_clean_message();
+    UTEST_ASSERT_FALSE(logger.is_clean_message_enabled());
+    
+    // Test that control characters are NOT cleaned when disabled
+    std::string message_with_newline = "Message with\nnewline";
+    logger.info(message_with_newline);
+    
+    auto buffer = logger.buffer();
+    UTEST_ASSERT_NOT_NULL(buffer);
+    UTEST_ASSERT_EQUALS(buffer->size(), 1);
+    
+    std::vector<std::string> messages;
+    for (auto it = buffer->cbegin(); it != buffer->cend(); ++it) {
+        messages.push_back(it->message);
+    }
+    
+    // Check that newline is NOT replaced when cleaning is disabled
+    UTEST_ASSERT_NOT_EQUALS(messages[0].find("Message with\nnewline"), std::string::npos);
+    UTEST_ASSERT_EQUALS(messages[0].find("\\x0A"), std::string::npos);
+    
+    // Re-enable message cleaning for other tests
+    logger.enable_clean_message();
+    UTEST_ASSERT_TRUE(logger.is_clean_message_enabled());
+    
+    logger.disable_buffer();
+}
+
+UTEST_FUNC_DEF2(Logger, CleanMessageUnicode) {
+    ConsoleCapture capture;
+    
+    auto& logger = ulog::getLogger("CleanMessageUnicodeTest");
+    logger.disable_console(); // We'll check the buffer instead
+    logger.enable_buffer();
+    
+    // Test that Unicode characters are preserved
+    std::string unicode_message = "Message with unicode: ñáéíóú 中文 🙂 Ω α β γ";
+    std::string mixed_message = "Unicode: ñáéíóú\nwith newline\tand tab";
+    
+    logger.info(unicode_message);
+    logger.info(mixed_message);
+    
+    auto buffer = logger.buffer();
+    UTEST_ASSERT_NOT_NULL(buffer);
+    UTEST_ASSERT_EQUALS(buffer->size(), 2);
+    
+    std::vector<std::string> messages;
+    for (auto it = buffer->cbegin(); it != buffer->cend(); ++it) {
+        messages.push_back(it->message);
+    }
+    
+    // Check that Unicode characters are preserved
+    UTEST_ASSERT_NOT_EQUALS(messages[0].find("ñáéíóú"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(messages[0].find("中文"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(messages[0].find("🙂"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(messages[0].find("Ω α β γ"), std::string::npos);
+    
+    // Check mixed message: Unicode preserved, control chars cleaned
+    UTEST_ASSERT_NOT_EQUALS(messages[1].find("ñáéíóú"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(messages[1].find("with newline and tab"), std::string::npos); // whitespace converted to spaces
+    
+    logger.disable_buffer();
+}
+
+UTEST_FUNC_DEF2(Logger, CleanMessageAllControlChars) {
+    ConsoleCapture capture;
+    
+    auto& logger = ulog::getLogger("CleanMessageAllControlTest");
+    logger.disable_console(); // We'll check the buffer instead
+    logger.enable_buffer();
+    
+    // Test all control characters from 0 to 31
+    std::string message = "Control chars: ";
+    for (int i = 0; i < 32; ++i) {
+        message += static_cast<char>(i);
+    }
+    message += " End";
+    
+    logger.info(message);
+    
+    auto buffer = logger.buffer();
+    UTEST_ASSERT_NOT_NULL(buffer);
+    UTEST_ASSERT_EQUALS(buffer->size(), 1);
+    
+    std::vector<std::string> messages;
+    for (auto it = buffer->cbegin(); it != buffer->cend(); ++it) {
+        messages.push_back(it->message);
+    }
+    std::string cleaned_message = messages[0];
+    
+    // Check that the message contains hex codes for non-whitespace control characters
+    UTEST_ASSERT_NOT_EQUALS(cleaned_message.find("Control chars: "), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(cleaned_message.find("\\x00"), std::string::npos); // NULL
+    UTEST_ASSERT_NOT_EQUALS(cleaned_message.find("\\x01"), std::string::npos); // SOH
+    UTEST_ASSERT_NOT_EQUALS(cleaned_message.find("\\x1F"), std::string::npos); // US (Unit Separator)
+    UTEST_ASSERT_NOT_EQUALS(cleaned_message.find(" End"), std::string::npos);
+    
+    // Check that whitespace characters are replaced with spaces (not hex codes)
+    UTEST_ASSERT_EQUALS(cleaned_message.find("\\x09"), std::string::npos); // tab should not be hex-encoded
+    UTEST_ASSERT_EQUALS(cleaned_message.find("\\x0A"), std::string::npos); // newline should not be hex-encoded
+    UTEST_ASSERT_EQUALS(cleaned_message.find("\\x0D"), std::string::npos); // carriage return should not be hex-encoded
+    
+    // Check that regular ASCII characters (32 and above) are not affected
+    UTEST_ASSERT_EQUALS(cleaned_message.find("\\x20"), std::string::npos); // Space should not be encoded
+    
+    logger.disable_buffer();
+}
+
+UTEST_FUNC_DEF2(Logger, CleanMessageWithObserver) {
+    // Test that cleaned messages are also passed to observers
+    class TestObserver : public ulog::LogObserver {
+    public:
+        void handleNewMessage(const ulog::LogEntry& entry) override {
+            last_message = entry.message;
+        }
+        std::string last_message;
+    };
+    
+    auto& logger = ulog::getLogger("CleanMessageObserverTest");
+    logger.disable_console();
+    
+    auto observer = std::make_shared<TestObserver>();
+    logger.add_observer(observer);
+    
+    // Create message with explicit control characters
+    std::string message_with_control_chars = "Message\nwith\ttabs\rand";
+    message_with_control_chars += static_cast<char>(1);  // SOH (\x01)
+    message_with_control_chars += "control";
+    message_with_control_chars += static_cast<char>(2);  // STX (\x02) 
+    message_with_control_chars += "chars";
+    
+    logger.info(message_with_control_chars);
+    
+    // Check that observer received cleaned message
+    // Whitespace characters should be replaced with spaces
+    UTEST_ASSERT_NOT_EQUALS(observer->last_message.find("Message with tabs and"), std::string::npos);
+    // Non-whitespace control characters should be hex-encoded
+    UTEST_ASSERT_NOT_EQUALS(observer->last_message.find("\\x01"), std::string::npos); // SOH
+    UTEST_ASSERT_NOT_EQUALS(observer->last_message.find("\\x02"), std::string::npos); // STX
+    
+    logger.remove_observer(observer);
+}
+
 void test_logger_register(bool& errorFound) {
     UTEST_FUNC2(Logger, BasicLogging);
     UTEST_FUNC2(Logger, LogLevels);
@@ -387,6 +579,11 @@ void test_logger_register(bool& errorFound) {
     UTEST_FUNC2(Logger, LogLevelFilteringWithBuffer);
     UTEST_FUNC2(Logger, LogLevelFilteringWithObserver);
     UTEST_FUNC2(Logger, AutoFlushingScope);
+    UTEST_FUNC2(Logger, CleanMessageBasic);
+    UTEST_FUNC2(Logger, CleanMessageDisabled);
+    UTEST_FUNC2(Logger, CleanMessageUnicode);
+    UTEST_FUNC2(Logger, CleanMessageAllControlChars);
+    UTEST_FUNC2(Logger, CleanMessageWithObserver);
 }
 
 int main() {

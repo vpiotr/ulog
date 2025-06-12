@@ -335,7 +335,7 @@ public:
      * @param name Logger name (empty for global logger)
      */
     explicit Logger(const std::string& name = "") 
-        : name_(name), console_enabled_(true), buffer_enabled_(false), log_level_(LogLevel::INFO) {}
+        : name_(name), console_enabled_(true), buffer_enabled_(false), log_level_(LogLevel::INFO), clean_message_(true) {}
     
     /**
      * @brief Log trace message
@@ -512,8 +512,108 @@ public:
      * @return Logger name
      */
     const std::string& name() const { return name_; }
+    
+    /**
+     * @brief Enable message cleaning (replaces control characters with hex codes)
+     */
+    void enable_clean_message() {
+        clean_message_ = true;
+    }
+    
+    /**
+     * @brief Disable message cleaning
+     */
+    void disable_clean_message() {
+        clean_message_ = false;
+    }
+    
+    /**
+     * @brief Check if message cleaning is enabled
+     * @return True if message cleaning is enabled
+     */
+    bool is_clean_message_enabled() const {
+        return clean_message_;
+    }
 
 private:
+    /**
+     * @brief Convert character to hex string representation
+     * @param ch Character to convert
+     * @return Hex string in format \xXX
+     */
+    static std::string char_to_hex(unsigned char ch) {
+        std::ostringstream oss;
+        oss << "\\x" << std::hex << std::setw(2) << std::setfill('0') << std::uppercase << static_cast<int>(ch);
+        return oss.str();
+    }
+
+    /**
+     * @brief Clean message by replacing control characters with hex codes or spaces
+     * Preserves unicode characters while handling ASCII control characters (<32):
+     * - Whitespace characters (space, tab, newline, etc.) are replaced with single space
+     * - Other control characters are replaced with hex codes
+     * @param message Message to clean
+     * @return Cleaned message
+     */
+    static std::string clean_message(const std::string& message) {
+        std::string cleaned;
+        cleaned.reserve(message.size() * 2); // Reserve extra space for potential hex codes
+        
+        for (size_t i = 0; i < message.size(); ++i) {
+            unsigned char ch = static_cast<unsigned char>(message[i]);
+            
+            // Check if this is a multi-byte UTF-8 character
+            if (ch >= 0x80) {
+                // UTF-8 multi-byte character - preserve it
+                if ((ch & 0xE0) == 0xC0) {
+                    // 2-byte sequence
+                    if (i + 1 < message.size()) {
+                        cleaned += message.substr(i, 2);
+                        i += 1; // Skip next byte
+                    } else {
+                        // Invalid UTF-8, replace with hex
+                        cleaned += char_to_hex(ch);
+                    }
+                } else if ((ch & 0xF0) == 0xE0) {
+                    // 3-byte sequence
+                    if (i + 2 < message.size()) {
+                        cleaned += message.substr(i, 3);
+                        i += 2; // Skip next 2 bytes
+                    } else {
+                        // Invalid UTF-8, replace with hex
+                        cleaned += char_to_hex(ch);
+                    }
+                } else if ((ch & 0xF8) == 0xF0) {
+                    // 4-byte sequence
+                    if (i + 3 < message.size()) {
+                        cleaned += message.substr(i, 4);
+                        i += 3; // Skip next 3 bytes
+                    } else {
+                        // Invalid UTF-8, replace with hex
+                        cleaned += char_to_hex(ch);
+                    }
+                } else {
+                    // Invalid UTF-8 start byte, replace with hex
+                    cleaned += char_to_hex(ch);
+                }
+            } else if (ch < 32) {
+                // ASCII control character - check if it's whitespace
+                if (ch == '\t' || ch == '\n' || ch == '\r' || ch == '\v' || ch == '\f') {
+                    // Whitespace characters: replace with single space
+                    cleaned += ' ';
+                } else {
+                    // Other control characters: replace with hex code
+                    cleaned += char_to_hex(ch);
+                }
+            } else {
+                // Regular ASCII character (32 and above), keep as-is
+                cleaned += ch;
+            }
+        }
+        
+        return cleaned;
+    }
+
     template<typename... Args>
     void log(LogLevel level, const std::string& format, Args&&... args) {
         // Check if logging is enabled for this level
@@ -523,6 +623,12 @@ private:
         }
         
         auto message = MessageFormatter::format(format, std::forward<Args>(args)...);
+        
+        // Apply message cleaning if enabled
+        if (clean_message_) {
+            message = clean_message(message);
+        }
+        
         auto entry = LogEntry(std::chrono::system_clock::now(), level, name_, message);
         
         std::lock_guard<std::mutex> lock(mutex_);
@@ -555,6 +661,7 @@ private:
     std::atomic<bool> console_enabled_;
     std::atomic<bool> buffer_enabled_;
     std::atomic<LogLevel> log_level_;
+    std::atomic<bool> clean_message_;
     std::unique_ptr<LogBuffer> buffer_;
     std::vector<std::shared_ptr<LogObserver>> observers_;
 };
