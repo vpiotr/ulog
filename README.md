@@ -17,7 +17,7 @@ A fast, simple, and lightweight header-only C++ logging library with console out
 - **Memory buffer**: Optional in-memory log storage with configurable capacity
 - **Observer pattern**: Extensible through custom log observers
 - **Console control**: Enable/disable console output at runtime
-- **RAII support**: Automatic resource management for observers
+- **RAII support**: Automatic resource management for observers and auto-flushing scopes
 - **Cross-platform**: Works on Linux, Windows, and macOS
 
 ## Quick Start
@@ -99,6 +99,33 @@ logger.remove_observer(observer);
     ulog::ObserverScope scope(logger, observer);
     logger.info("This will be observed");
 } // Observer automatically removed
+```
+
+### Auto-Flushing Scope
+
+Use RAII to automatically flush loggers when scopes exit:
+
+```cpp
+auto logger = ulog::getLogger("FlushApp");
+
+{
+    ulog::AutoFlushingScope scope(logger);
+    
+    logger.info("Message 1");
+    logger.warn("Message 2");
+    
+    // flush() will be called automatically when scope exits
+}
+
+// Nested scopes work too
+{
+    ulog::AutoFlushingScope outerScope(logger);
+    {
+        ulog::AutoFlushingScope innerScope(logger);
+        logger.info("Inner message");
+    } // Inner flush happens here
+    logger.info("Outer message");
+} // Outer flush happens here
 ```
 
 ### Console Control
@@ -280,6 +307,16 @@ ulog::ObserverScope scope(logger, observer); // Adds observer
 // ... observer automatically removed when scope ends
 ```
 
+#### `ulog::AutoFlushingScope`
+
+RAII class for automatic logger flushing:
+
+```cpp
+ulog::AutoFlushingScope scope(logger); // Will flush when scope ends
+logger.info("This message will be flushed automatically");
+// ... logger flushed when scope ends
+```
+
 ### Global Functions
 
 - `ulog::getLogger()` - Get global logger
@@ -357,6 +394,7 @@ See the `demos/` directory for comprehensive examples:
 - `demos/demo_file_observer.cpp` - File output via observer pattern with RAII management and multiple observers
 - `demos/demo_log_level_filtering.cpp` - Log level filtering examples with buffers and observers
 - `demos/demo_custom_formatting.cpp` - Custom formatting for both primitive and user-defined types including wrapper classes, operator<< overloads, template specialization, container support, and performance tips
+- `demos/demo_auto_flushing.cpp` - RAII auto-flushing scope examples including basic usage, nested scopes, multiple loggers, and exception safety
 
 ## Contributing
 

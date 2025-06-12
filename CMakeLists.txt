@@ -78,6 +78,11 @@ add_executable(demo_custom_formatting
 )
 target_link_libraries(demo_custom_formatting ulog)
 
+add_executable(demo_auto_flushing
+    demos/demo_auto_flushing.cpp
+)
+target_link_libraries(demo_auto_flushing ulog)
+
 # Add tests to CTest
 add_test(NAME test_logger COMMAND test_logger)
 add_test(NAME test_buffer COMMAND test_buffer)

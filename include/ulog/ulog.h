@@ -591,6 +591,36 @@ private:
 };
 
 /**
+ * @brief RAII auto-flushing scope for automatic logger flushing
+ */
+class AutoFlushingScope {
+public:
+    /**
+     * @brief Constructor - stores logger reference
+     * @param logger Logger to flush on scope exit
+     */
+    explicit AutoFlushingScope(Logger& logger)
+        : logger_(logger) {
+    }
+    
+    /**
+     * @brief Destructor - automatically flushes logger
+     */
+    ~AutoFlushingScope() {
+        logger_.flush();
+    }
+    
+    // Non-copyable, non-movable
+    AutoFlushingScope(const AutoFlushingScope&) = delete;
+    AutoFlushingScope& operator=(const AutoFlushingScope&) = delete;
+    AutoFlushingScope(AutoFlushingScope&&) = delete;
+    AutoFlushingScope& operator=(AutoFlushingScope&&) = delete;
+
+private:
+    Logger& logger_;
+};
+
+/**
  * @brief Logger registry for managing named loggers
  */
 class LoggerRegistry {

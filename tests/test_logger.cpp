@@ -316,6 +316,65 @@ UTEST_FUNC_DEF2(Logger, LogLevelFilteringWithObserver) {
     logger.remove_observer(observer);
 }
 
+UTEST_FUNC_DEF2(Logger, AutoFlushingScope) {
+    auto& logger = ulog::getLogger("AutoFlushTest");
+    
+    // Create a test observer that tracks flush calls
+    class FlushTrackingObserver : public ulog::LogObserver {
+    public:
+        void handleNewMessage(const ulog::LogEntry& entry) override {
+            (void)entry; // Unused
+        }
+        
+        void handleFlush(const std::string& logger_name) override {
+            flush_count++;
+            last_flushed_logger = logger_name;
+        }
+        
+        int flush_count = 0;
+        std::string last_flushed_logger;
+    };
+    
+    auto observer = std::make_shared<FlushTrackingObserver>();
+    logger.add_observer(observer);
+    
+    // Initial state - no flushes
+    UTEST_ASSERT_EQUALS(observer->flush_count, 0);
+    
+    {
+        // Create AutoFlushingScope
+        ulog::AutoFlushingScope scope(logger);
+        
+        // Log some messages
+        logger.info("Message 1");
+        logger.info("Message 2");
+        
+        // Still no flush yet
+        UTEST_ASSERT_EQUALS(observer->flush_count, 0);
+        
+        // Scope will exit here and trigger flush
+    }
+    
+    // After scope exit, flush should have been called once
+    UTEST_ASSERT_EQUALS(observer->flush_count, 1);
+    UTEST_ASSERT_EQUALS(observer->last_flushed_logger, "AutoFlushTest");
+    
+    // Test multiple nested scopes
+    {
+        ulog::AutoFlushingScope scope1(logger);
+        {
+            ulog::AutoFlushingScope scope2(logger);
+            logger.info("Nested message");
+        }
+        // First nested scope exit should trigger one flush
+        UTEST_ASSERT_EQUALS(observer->flush_count, 2);
+    }
+    // Second scope exit should trigger another flush
+    UTEST_ASSERT_EQUALS(observer->flush_count, 3);
+    
+    logger.remove_observer(observer);
+}
+
 void test_logger_register(bool& errorFound) {
     UTEST_FUNC2(Logger, BasicLogging);
     UTEST_FUNC2(Logger, LogLevels);
@@ -327,6 +386,7 @@ void test_logger_register(bool& errorFound) {
     UTEST_FUNC2(Logger, LogLevelFiltering);
     UTEST_FUNC2(Logger, LogLevelFilteringWithBuffer);
     UTEST_FUNC2(Logger, LogLevelFilteringWithObserver);
+    UTEST_FUNC2(Logger, AutoFlushingScope);
 }
 
 int main() {
