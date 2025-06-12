@@ -287,6 +287,39 @@ ulog::ObserverScope scope(logger, observer); // Adds observer
 - `ulog::getLogger(name, factory)` - Get logger using factory function
 - `ulog::getLogger(factory)` - Get global logger using factory function
 
+## Custom Type Support
+
+ulog can log any type that supports stream output (`operator<<`). For custom classes, simply provide an `operator<<` overload:
+
+```cpp
+class Person {
+public:
+    Person(const std::string& name, int age) : name_(name), age_(age) {}
+    
+    // Provide operator<< for ulog support
+    friend std::ostream& operator<<(std::ostream& os, const Person& person) {
+        os << "Person(name=" << person.name_ << ", age=" << person.age_ << ")";
+        return os;
+    }
+    
+private:
+    std::string name_;
+    int age_;
+};
+
+int main() {
+    auto logger = ulog::getLogger("CustomDemo");
+    
+    Person person("Alice", 30);
+    logger.info("Created user: {?}", person);
+    // Output: 2025-06-12 10:30:15.123 [INFO] [CustomDemo] Created user: Person(name=Alice, age=30)
+    
+    return 0;
+}
+```
+
+For comprehensive examples including advanced formatting, template specialization, container support, and performance tips, see `demos/demo_custom_formatting.cpp`.
+
 ## Output Format
 
 All log messages follow this consistent format:
@@ -318,22 +351,12 @@ For global logger (empty name), the logger name part is omitted:
 
 ## Examples
 
-See the `demos/demo_main.cpp` file for comprehensive examples covering:
+See the `demos/` directory for comprehensive examples:
 
-- Basic logging with all levels
-- Parameter formatting (anonymous and positional)
-- Memory buffer usage
-- Observer pattern implementation
-- Console control
-- Thread safety demonstration
-- Logger factory usage
-
-See `demos/demo_log_level_filtering.cpp` for log level filtering examples:
-
-- Default behavior with INFO level filtering
-- Setting different log levels (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF)
-- Log level filtering with memory buffers
-- Log level filtering with observers
+- `demos/demo_main.cpp` - Core functionality including basic logging, parameter formatting, memory buffer usage, observer pattern, console control, thread safety, and logger factory usage
+- `demos/demo_file_observer.cpp` - File output via observer pattern with RAII management and multiple observers
+- `demos/demo_log_level_filtering.cpp` - Log level filtering examples with buffers and observers
+- `demos/demo_custom_formatting.cpp` - Custom formatting for both primitive and user-defined types including wrapper classes, operator<< overloads, template specialization, container support, and performance tips
 
 ## Contributing
 

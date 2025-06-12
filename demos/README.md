@@ -52,20 +52,85 @@ This demo showcases how to implement file output functionality using the observe
 - **Thread Safety**: All file operations are thread-safe
 - **Immediate Flush**: Ensures log entries are written immediately to disk
 
+### 3. demo_log_level_filtering.cpp
+**Log Level Filtering Demo** - Demonstrates log level filtering functionality.
+
+This demo showcases how to use log level filtering to control which messages are logged:
+
+#### Features:
+- **Basic Log Level Filtering**: Shows how different log levels filter messages
+- **Buffer Integration**: Demonstrates filtering with memory buffers
+- **Observer Integration**: Shows how filtering affects observers
+- **Level Configuration**: Examples of setting different log levels
+
+### 4. demo_custom_formatting.cpp
+**Custom Formatting Demo** - Shows how to enable custom formatting for both primitive and user-defined types.
+
+This demo demonstrates various approaches to customize formatting in ulog:
+
+#### Features:
+- **Primitive Custom Formatting**: Wrapper classes for hex, percentage, precision control
+- **Basic Custom Classes**: Simple classes with `operator<<` overload
+- **Advanced Formatting**: JSON-like output for complex objects
+- **Geometric Types**: Coordinate and mathematical objects
+- **Specialization**: Using `ustr::to_string` template specialization
+- **Container Support**: Approaches for logging standard containers
+- **Performance Tips**: Best practices for efficient custom type logging
+
+#### Demo Scenarios:
+
+1. **Basic Custom Class Support**
+   - Person class with name and age
+   - Simple operator<< implementation
+   - Integration with ulog parameter formatting
+
+2. **Advanced Custom Class (JSON-like)**
+   - UserAccount class with complex data
+   - Structured JSON-style output
+   - Multiple data fields formatting
+
+3. **Geometric Types**
+   - Point class with coordinates
+   - Mathematical calculations and logging
+   - Coordinate system representations
+
+4. **ustr::to_string Specialization**
+   - Alternative to operator<< approach
+   - Template specialization technique
+   - Full control over string conversion
+
+5. **Container Support**
+   - Manual formatting for std::vector and std::map
+   - Helper functions for container logging
+   - Individual element access patterns
+
+6. **Performance Considerations**
+   - Efficient logging practices
+   - Log level checking for expensive operations
+   - String conversion optimization tips
+
 ## Building and Running
 
 ### Build the demos:
 ```bash
 mkdir build && cd build
 cmake ..
-make demo_file_observer  # For the file observer demo
-make ulog_demo          # For the main demo
+make demo_file_observer     # For the file observer demo
+make demo_log_level_filtering # For the log level filtering demo
+make demo_custom_formatting      # For the custom types demo
+make ulog_demo             # For the main demo
 ```
 
 ### Run the demos:
 ```bash
 # Run the file observer demo
 ./demo_file_observer
+
+# Run the log level filtering demo
+./demo_log_level_filtering
+
+# Run the custom types demo
+./demo_custom_formatting
 
 # Run the main demo
 ./ulog_demo
