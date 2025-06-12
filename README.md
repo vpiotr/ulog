@@ -1,5 +1,6 @@
 # ulog - Lightweight C++ Logging Library
 
+[![Build Status](https://github.com/vpiotr/ulog/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/vpiotr/ulog/actions/workflows/cmake-multi-platform.yml)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/std/the-standard)
 [![CMake](https://img.shields.io/badge/CMake-3.16%2B-green.svg)](https://cmake.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
