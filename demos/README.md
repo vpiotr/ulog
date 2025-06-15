@@ -367,6 +367,77 @@ This demo showcases how to create rich, informative exception logs using custom 
 - **Error Analytics**: Structured exception data for trend analysis and root cause identification
 - **Multi-tier Applications**: Exception propagation with preserved context across service boundaries
 
+### 10. demo_buffer_assertions.cpp
+**Buffer Assertions Extension Demo** - Demonstrates comprehensive testing utilities for validating log buffer contents.
+
+This demo showcases the BufferAssertions extension, which provides a rich set of assertion utilities for testing log buffer contents in unit tests and demos:
+
+#### Features:
+- **BufferAssertions Extension**: Comprehensive assertion library for buffer content validation
+- **Test Helper Classes**: Reusable RAII test utilities for consistent test setup and teardown
+- **Performance Testing**: Built-in helpers for measuring logging and assertion performance
+- **Error Handling**: Robust exception handling with descriptive error messages
+- **Pattern Matching**: Regex-based message validation for complex format checking
+
+#### Demo Scenarios:
+
+1. **Basic Buffer Assertions**
+   - Size validation (empty, non-empty, specific size)
+   - Buffer lifecycle testing (clear, refill, validate)
+   - Simple test setup using TestScope helper
+
+2. **Message Content Validation**
+   - Text search within log messages
+   - First and last message specific assertions
+   - Negative assertions (ensuring content is NOT present)
+
+3. **Log Level Analysis**
+   - Counting messages by log level
+   - Level-specific content validation
+   - Multi-level logging scenarios
+
+4. **Pattern Matching and Regex**
+   - Complex message format validation
+   - User ID, temperature, file size pattern matching
+   - Exception stack trace pattern recognition
+
+5. **Custom Predicate Assertions**
+   - Message length analysis (short, medium, long messages)
+   - Custom validation logic with lambda functions
+   - Any-match and all-match scenarios
+
+6. **Chronological Order Validation**
+   - Timestamp ordering verification
+   - Multi-threaded logging scenario validation
+   - Time-sensitive logging analysis
+
+7. **Performance Testing**
+   - High-volume message logging (500+ messages)
+   - Assertion performance measurement
+   - Buffer operation benchmarking
+
+8. **Error Handling and Edge Cases**
+   - Assertion failure testing
+   - Exception message validation
+   - Robust error reporting
+
+9. **Comprehensive Real-World Scenario**
+   - Application startup/shutdown simulation
+   - Multi-level logging with error conditions
+   - Complete application lifecycle validation
+   - Pattern-based validation for user operations
+
+#### Extensions Included:
+- **buffer_assertions.h**: Core assertion utilities
+- **test_helpers.h**: Reusable test setup and performance measurement classes
+
+#### Use Cases:
+- **Unit Testing**: Comprehensive log validation in automated tests
+- **Integration Testing**: Multi-component logging scenario validation
+- **Performance Analysis**: Logging system performance characterization
+- **Debugging Tools**: Interactive log content analysis and validation
+- **Quality Assurance**: Systematic logging behavior verification
+
 ## Building and Running
 
 ### Build the demos:
@@ -381,6 +452,7 @@ make demo_auto_flushing         # For the auto-flushing scope demo
 make demo_debug_scope           # For the debug scope RAII demo
 make demo_cerr_observer         # For the cerr observer demo
 make demo_exception_formatting  # For the exception formatting demo
+make demo_buffer_assertions     # For the buffer assertions extension demo
 make ulog_demo                  # For the main demo
 ```
 
@@ -409,6 +481,9 @@ make ulog_demo                  # For the main demo
 
 # Run the exception formatting demo
 ./demo_exception_formatting
+
+# Run the buffer assertions extension demo
+./demo_buffer_assertions
 
 # Run the main demo
 ./ulog_demo

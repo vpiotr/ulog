@@ -111,6 +111,17 @@ target_link_libraries(demo_ustr_integration ulog)
 # so it can find "ustr/ustr.h"
 target_include_directories(demo_ustr_integration PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/demos)
 
+add_executable(demo_buffer_assertions
+    demos/demo_buffer_assertions.cpp
+)
+target_link_libraries(demo_buffer_assertions ulog)
+# Add the demos directories to the include path for demo_buffer_assertions
+# so it can find "buffer_assertions.h" and "test_helpers.h"
+target_include_directories(demo_buffer_assertions PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/demos/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/demos/extensions/include
+)
+
 add_executable(demo_buffer_benchmark_no_mutex
     benchmarks/demo_buffer_benchmark_no_mutex.cpp
 )
