@@ -567,6 +567,58 @@ UTEST_FUNC_DEF2(Logger, CleanMessageWithObserver) {
     logger.remove_observer(observer);
 }
 
+UTEST_FUNC_DEF2(Logger, CleanMessageUtf8Option) {
+    ConsoleCapture capture;
+    
+    // Test the new UTF-8 handling option through logger functionality
+    auto& logger_utf8 = ulog::getLogger("CleanMessageUtf8Test");
+    auto& logger_no_utf8 = ulog::getLogger("CleanMessageNoUtf8Test");
+    
+    logger_utf8.disable_console();
+    logger_utf8.enable_buffer();
+    logger_utf8.enable_utf8_handling();
+    
+    logger_no_utf8.disable_console();
+    logger_no_utf8.enable_buffer();
+    logger_no_utf8.disable_utf8_handling();
+    
+    // Test string with UTF-8 characters and control characters
+    std::string test_message = "Hello\nWorld\t中文\x08\x1F🙂";
+    
+    logger_utf8.info(test_message);
+    logger_no_utf8.info(test_message);
+    
+    auto buffer_utf8 = logger_utf8.buffer();
+    auto buffer_no_utf8 = logger_no_utf8.buffer();
+    
+    UTEST_ASSERT_NOT_NULL(buffer_utf8);
+    UTEST_ASSERT_NOT_NULL(buffer_no_utf8);
+    UTEST_ASSERT_EQUALS(buffer_utf8->size(), 1);
+    UTEST_ASSERT_EQUALS(buffer_no_utf8->size(), 1);
+    
+    std::string cleaned_with_utf8 = buffer_utf8->cbegin()->message;
+    std::string cleaned_without_utf8 = buffer_no_utf8->cbegin()->message;
+    
+    // With UTF-8 enabled: newline/tab should be spaces, Unicode chars preserved, control chars as hex
+    UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find("Hello World"), std::string::npos); // spaces
+    UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find("中文"), std::string::npos); // Unicode preserved
+    UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find("🙂"), std::string::npos); // Emoji preserved
+    UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find("\\x08"), std::string::npos); // Control char as hex
+    UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find("\\x1F"), std::string::npos); // Control char as hex
+    
+    // Without UTF-8: newline/tab should still be spaces, but high-bit characters are treated as regular bytes
+    UTEST_ASSERT_NOT_EQUALS(cleaned_without_utf8.find("Hello World"), std::string::npos); // spaces
+    UTEST_ASSERT_NOT_EQUALS(cleaned_without_utf8.find("\\x08"), std::string::npos); // Control char as hex
+    UTEST_ASSERT_NOT_EQUALS(cleaned_without_utf8.find("\\x1F"), std::string::npos); // Control char as hex
+    
+    // Verify UTF-8 handling state
+    UTEST_ASSERT_TRUE(logger_utf8.is_utf8_handling_enabled());
+    UTEST_ASSERT_FALSE(logger_no_utf8.is_utf8_handling_enabled());
+    
+    logger_utf8.disable_buffer();
+    logger_no_utf8.disable_buffer();
+}
+
 void test_logger_register(bool& errorFound) {
     UTEST_FUNC2(Logger, BasicLogging);
     UTEST_FUNC2(Logger, LogLevels);
@@ -584,6 +636,7 @@ void test_logger_register(bool& errorFound) {
     UTEST_FUNC2(Logger, CleanMessageUnicode);
     UTEST_FUNC2(Logger, CleanMessageAllControlChars);
     UTEST_FUNC2(Logger, CleanMessageWithObserver);
+    UTEST_FUNC2(Logger, CleanMessageUtf8Option);
 }
 
 int main() {

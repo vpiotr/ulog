@@ -105,6 +105,10 @@ namespace ustr {
 #define ULOG_USE_MUTEX_FOR_OBSERVERS 1 ///< Enable mutex for observer operations (default: enabled)
 #endif
 
+#ifndef DEFAULT_STR_IS_UTF8
+#define DEFAULT_STR_IS_UTF8 0 ///< Default UTF-8 handling in clean_message function (default: disabled)
+#endif
+
 namespace ulog {
 
 /**
@@ -358,7 +362,7 @@ public:
      * @param name Logger name (empty for global logger)
      */
     explicit Logger(const std::string& name = "") 
-        : name_(name), console_enabled_(true), buffer_enabled_(false), log_level_(LogLevel::INFO), clean_message_(true) {}
+        : name_(name), console_enabled_(true), buffer_enabled_(false), log_level_(LogLevel::INFO), clean_message_(true), utf8_handling_(DEFAULT_STR_IS_UTF8) {}
     
     /**
      * @brief Log trace message
@@ -572,6 +576,28 @@ public:
         return clean_message_;
     }
 
+    /**
+     * @brief Enable UTF-8 handling in message cleaning
+     */
+    void enable_utf8_handling() {
+        utf8_handling_ = true;
+    }
+    
+    /**
+     * @brief Disable UTF-8 handling in message cleaning
+     */
+    void disable_utf8_handling() {
+        utf8_handling_ = false;
+    }
+    
+    /**
+     * @brief Check if UTF-8 handling is enabled
+     * @return True if UTF-8 handling is enabled
+     */
+    bool is_utf8_handling_enabled() const {
+        return utf8_handling_;
+    }
+
 private:
     /**
      * @brief Convert character to hex string representation
@@ -590,17 +616,18 @@ private:
      * - Whitespace characters (space, tab, newline, etc.) are replaced with single space
      * - Other control characters are replaced with hex codes
      * @param message Message to clean
+     * @param is_utf8 Whether to handle UTF-8 multibyte characters (default: DEFAULT_STR_IS_UTF8)
      * @return Cleaned message
      */
-    static std::string clean_message(const std::string& message) {
+    static std::string clean_message(const std::string& message, bool is_utf8 = DEFAULT_STR_IS_UTF8) {
         std::string cleaned;
         cleaned.reserve(message.size() * 2); // Reserve extra space for potential hex codes
         
         for (size_t i = 0; i < message.size(); ++i) {
             unsigned char ch = static_cast<unsigned char>(message[i]);
             
-            // Check if this is a multi-byte UTF-8 character
-            if (ch >= 0x80) {
+            // Check if this is a multi-byte UTF-8 character (only if UTF-8 handling is enabled)
+            if (is_utf8 && ch >= 0x80) {
                 // UTF-8 multi-byte character - preserve it
                 if ((ch & 0xE0) == 0xC0) {
                     // 2-byte sequence
@@ -633,6 +660,9 @@ private:
                     // Invalid UTF-8 start byte, replace with hex
                     cleaned += char_to_hex(ch);
                 }
+            } else if (!is_utf8 && ch >= 0x80) {
+                // UTF-8 handling disabled - treat high-bit characters as regular bytes
+                cleaned += ch;
             } else if (ch < 32) {
                 // ASCII control character - check if it's whitespace
                 if (ch == '\t' || ch == '\n' || ch == '\r' || ch == '\v' || ch == '\f') {
@@ -663,7 +693,7 @@ private:
         
         // Apply message cleaning if enabled
         if (clean_message_) {
-            message = clean_message(message);
+            message = clean_message(message, utf8_handling_);
         }
         
         auto entry = LogEntry(std::chrono::system_clock::now(), level, name_, message);
@@ -720,6 +750,7 @@ private:
     std::atomic<bool> buffer_enabled_;
     std::atomic<LogLevel> log_level_;
     std::atomic<bool> clean_message_;
+    std::atomic<bool> utf8_handling_;
     std::unique_ptr<LogBuffer> buffer_;
     std::vector<std::shared_ptr<LogObserver>> observers_;
 };
