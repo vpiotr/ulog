@@ -68,6 +68,8 @@ logger.debug("This too");
 // Access buffer contents
 auto buffer = logger.buffer();
 for (auto it = buffer->cbegin(); it != buffer->cend(); ++it) {
+    // it->message contains formatted message with parameters substituted: "This message is buffered"
+    // it->formatted_message() contains full log line: "2025-06-15 10:30:15.123 [INFO] [BufferedApp] This message is buffered"
     std::cout << it->formatted_message() << std::endl;
 }
 
@@ -292,8 +294,8 @@ The project includes convenient shell scripts for common operations:
 # Run all tests
 ./run_tests.sh
 
-# Run demo application
-./run_demo.sh
+# Run demo applications
+./run_demos.sh
 
 # Generate Doxygen documentation (requires Doxygen)
 ./build_docs.sh
@@ -306,8 +308,11 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 
-# Run tests
-./ulog_tests
+# Run tests (multiple test executables)
+./test_logger
+./test_buffer
+./test_formatter
+./test_observer
 
 # Run demo
 ./ulog_demo
@@ -339,8 +344,19 @@ Structure containing log information:
 - `timestamp` - When the log entry was created
 - `level` - Log level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)
 - `logger_name` - Name of the logger that created this entry
-- `message` - The formatted log message
-- `formatted_message()` - Get fully formatted log line
+- `message` - The formatted message with all parameters already substituted
+- `formatted_message()` - Get fully formatted log line with timestamp, level, logger name, and message
+
+**Key Difference:**
+- `message` contains the formatted message with parameters substituted (e.g., for `logger.info("Hello user {0}", "tom123")`, this would be "Hello user tom123")
+- `formatted_message()` returns the complete formatted log line (e.g., "2025-06-15 10:30:15.123 [INFO] [MyApp] Hello user tom123")
+
+**Parameter Processing:**
+When you call `logger.info("Hello user {0}", "tom123")`, the parameters are processed as follows:
+1. Parameters are converted to strings using `to_string()`
+2. Placeholders (`{0}`, `{1}`, `{?}`) are replaced with the converted parameter values
+3. The resulting formatted message ("Hello user tom123") is stored in the `message` field
+4. Original format string and parameters are not preserved in the LogEntry
 
 #### `ulog::LogObserver`
 
@@ -447,10 +463,12 @@ See the `demos/` directory for comprehensive examples:
 - `demos/demo_file_observer.cpp` - File output via observer pattern with RAII management and multiple observers
 - `demos/demo_log_level_filtering.cpp` - Log level filtering examples with buffers and observers
 - `demos/demo_custom_formatting.cpp` - Custom formatting for both primitive and user-defined types including wrapper classes, operator<< overloads, template specialization, container support, and performance tips
+- `demos/demo_container_formatting.cpp` - Advanced container formatting examples with STL containers and custom types
 - `demos/demo_auto_flushing.cpp` - RAII auto-flushing scope examples including basic usage, nested scopes, multiple loggers, and exception safety
 - `demos/demo_debug_scope.cpp` - DebugScope RAII pattern with observer integration for automatic scope entry/exit logging, nested scopes, multiple loggers, and exception safety
 - `demos/demo_cerr_observer.cpp` - Error message redirection to stderr via observer pattern with multiple observer support, RAII management, and exception safety
 - `demos/demo_exception_formatting.cpp` - Automatic exception formatting with custom exception wrappers, nested exception handling, system error integration, and real-world scenarios
+- `demos/demo_ustr_integration.cpp` - Integration with external ustr.h library for enhanced string conversion capabilities
 
 ## Contributing
 
@@ -492,4 +510,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*For detailed API documentation, run `./scripts/build_docs.sh` to generate Doxygen documentation.*
+*For detailed API documentation, run `./build_docs.sh` to generate Doxygen documentation.*

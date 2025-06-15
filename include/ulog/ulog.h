@@ -128,25 +128,27 @@ inline std::string to_string(LogLevel level) {
  * @brief Log entry structure containing all log information
  */
 struct LogEntry {
-    std::chrono::system_clock::time_point timestamp;
-    LogLevel level;
-    std::string logger_name;
-    std::string message;
+    std::chrono::system_clock::time_point timestamp; ///< When the log entry was created
+    LogLevel level;                                   ///< Log level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)
+    std::string logger_name;                         ///< Name of the logger that created this entry
+    std::string message;                             ///< The formatted message with all parameters substituted (e.g., "Hello user tom123")
     
     /**
      * @brief Constructor for log entry
      * @param ts Timestamp
      * @param lvl Log level
      * @param name Logger name
-     * @param msg Message
+     * @param msg Formatted message content with parameters already substituted
      */
     LogEntry(std::chrono::system_clock::time_point ts, LogLevel lvl, 
              const std::string& name, const std::string& msg)
         : timestamp(ts), level(lvl), logger_name(name), message(msg) {}
     
     /**
-     * @brief Get formatted message including timestamp, level, and logger name
-     * @return Formatted log message
+     * @brief Get fully formatted log line with timestamp, level, logger name, and message
+     * @return Complete formatted log line ready for output (e.g., "2025-06-15 10:30:15.123 [INFO] [MyApp] Hello user tom123")
+     * @note This differs from the 'message' field which contains the formatted message with substituted parameters
+     *       but without timestamp/level prefix formatting
      */
     std::string formatted_message() const {
         std::ostringstream oss;
