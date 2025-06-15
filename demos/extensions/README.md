@@ -108,3 +108,142 @@ The extension is header-only and requires C++17 or later.
 ## Demo
 
 See `../demo_buffer_assertions.cpp` for a comprehensive demonstration of all features and usage patterns.
+
+## Buffer Statistics Extension
+
+**Files:** `include/buffer_stats.h`, `include/buffer_stats_reporter.h`
+
+The BufferStats extension provides comprehensive statistical analysis capabilities for log buffer contents, focusing on performance metrics, message pattern analysis, and outlier detection. Unlike BufferAssertions which validates expected conditions, BufferStats calculates and reports actual metrics without validation.
+
+### Features
+
+- **Basic Statistics**: Message counts, level distribution, frequency analysis
+- **Timing Analysis**: Intervals, timespan, average/median calculations  
+- **Performance Metrics**: Slow operation detection and analysis
+- **Outlier Detection**: Identify messages followed by unusually long delays
+- **Pattern Analysis**: Top message prefixes and frequency patterns
+- **Contention Analysis**: Lock contention pattern detection
+- **Lambda Filtering**: Custom message filtering with predicates
+- **Comprehensive Reporting**: Human-readable reports with insights
+
+### Usage Example
+
+```cpp
+#include "ulog/ulog.h"
+#include "buffer_stats.h"
+#include "buffer_stats_reporter.h"
+
+// Set up logger with buffer
+auto& logger = ulog::getLogger("app");
+logger.enable_buffer(1000);
+
+// Generate some messages with timing
+logger.info("SQL_SELECT: user query");
+std::this_thread::sleep_for(std::chrono::milliseconds(200));
+logger.info("CACHE_HIT: user data found");
+std::this_thread::sleep_for(std::chrono::milliseconds(10));
+logger.info("AWS_S3: file upload");
+std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+// Analyze buffer statistics
+ulog::extensions::BufferStats stats(logger);
+
+// Basic statistics
+std::cout << "Total messages: " << stats.total_messages() << std::endl;
+std::cout << "Average interval: " << stats.average_interval().count() << "ms" << std::endl;
+
+// Performance analysis
+std::vector<std::string> slow_prefixes = {"SQL_", "AWS_"};
+auto perf_metrics = stats.analyze_slow_operations(slow_prefixes);
+std::cout << "Slow operations: " << perf_metrics.slow_operations_count << std::endl;
+
+// Outlier detection
+auto outliers = stats.delay_outliers(90.0); // 90th percentile
+std::cout << "Delay outliers: " << outliers.size() << std::endl;
+
+// Pattern analysis
+auto top_prefixes = stats.top_prefixes(5, 15);
+for (const auto& pair : top_prefixes) {
+    std::cout << "Prefix \"" << pair.first << "\": " << pair.second << " times" << std::endl;
+}
+
+// Lambda filtering
+auto error_messages = stats.filter_messages([](const ulog::LogEntry& entry) {
+    return entry.level == ulog::LogLevel::ERROR;
+});
+
+// Generate comprehensive report
+ulog::extensions::BufferStatsReporter reporter(stats);
+std::cout << reporter.generate_full_report() << std::endl;
+```
+
+### Statistical Methods
+
+| Method | Description |
+|--------|-------------|
+| `total_messages()` | Get total number of messages |
+| `messages_by_level(level)` | Count messages by log level |
+| `level_distribution()` | Get map of level -> count |
+| `total_timespan()` | Duration from first to last message |
+| `average_interval()` | Average time between messages |
+| `median_interval()` | Median time between messages |
+| `all_intervals()` | Vector of all intervals |
+
+### Pattern Analysis
+
+| Method | Description |
+|--------|-------------|
+| `top_prefixes(n, length)` | Most frequent message prefixes |
+| `message_frequency(n)` | Most frequent complete messages |
+
+### Performance Analysis
+
+| Method | Description |
+|--------|-------------|
+| `analyze_slow_operations(prefixes)` | Analyze operations with specific prefixes |
+| `analyze_contention(prefixes)` | Analyze lock contention patterns |
+| `delay_outliers(percentile)` | Find messages with unusual delays |
+
+### Advanced Filtering
+
+| Method | Description |
+|--------|-------------|
+| `filter_messages(predicate)` | Filter messages with custom predicate |
+| `top_messages_by(n, extract, comp)` | Top N messages by custom criteria |
+
+### Reporting
+
+The `BufferStatsReporter` class generates human-readable reports:
+
+| Method | Description |
+|--------|-------------|
+| `generate_summary_report()` | Basic statistics summary |
+| `generate_performance_report()` | Performance-focused analysis |
+| `generate_outlier_report()` | Outlier detection results |
+| `generate_full_report()` | Comprehensive analysis |
+| `print_report(stream)` | Print report to stream |
+| `save_report(filename)` | Save report to file |
+
+### Report Insights
+
+The reporter provides actionable insights such as:
+- "Top 5 slowest operation types contributing to 80% of total delay time"
+- "Lock contention detected with 300% variance in delay times"
+- "SQL operations show consistent 200-400ms delays"
+- "3 outlier operations detected exceeding 90th percentile by >5x"
+
+## Integration
+
+To use these extensions in your project:
+
+1. Include the headers: `#include "buffer_stats.h"` and `#include "buffer_stats_reporter.h"`
+2. Make sure your logger has buffering enabled: `logger.enable_buffer(capacity)`
+3. Create stats object: `BufferStats stats(logger)`
+4. Use statistical methods or create reporter: `BufferStatsReporter reporter(stats)`
+
+Both extensions are header-only and require C++17 or later.
+
+## Demos
+
+- See `../demo_buffer_assertions.cpp` for BufferAssertions usage
+- See `../demo_buffer_stats.cpp` for BufferStats comprehensive scenarios
