@@ -197,28 +197,81 @@ Simply copy `include/ulog/ulog.h` to your project and include it:
 Clone the repository and use CMake:
 
 ```bash
-git clone https://github.com/your-repo/ulog.git
-cd ulog
-mkdir build && cd build
-cmake ..
-make
+git clone https://github.com/vpiotr/ulog.git
 ```
 
-### Method 3: CMake FetchContent
-
-Add to your `CMakeLists.txt`:
+Then, in your `CMakeLists.txt`:
 
 ```cmake
-include(FetchContent)
-FetchContent_Declare(
-    ulog
-    GIT_REPOSITORY https://github.com/your-repo/ulog.git
-    GIT_TAG main
-)
-FetchContent_MakeAvailable(ulog)
+# Add ulog as a subdirectory
+add_subdirectory(path/to/ulog)
 
-target_link_libraries(your_target ulog)
+# Link against the ulog library
+target_link_libraries(your_target PRIVATE ulog)
 ```
+
+## Custom `to_string` with `ustr.h` (Optional)
+
+`ulog` can be configured to use an external `to_string` implementation from a library like `ustr.h`. This is useful if you already have a `to_string` utility or want more control over string conversions, especially for custom types or advanced formatting of STL containers.
+
+**To enable this feature:**
+
+1.  **Define `ULOG_USE_USTR`**: Before including `ulog/ulog.h`, define the macro `ULOG_USE_USTR`.
+    ```cpp
+    #define ULOG_USE_USTR
+    #include "ulog/ulog.h"
+    #include "ustr/ustr.h" // Your ustr.h header
+    ```
+
+2.  **Provide `ustr.h`**: Ensure that a header file named `ustr.h` is available in your include paths. This file should contain a namespace `ustr` with `to_string` template functions and specializations.
+
+    A minimal `ustr.h` stub might look like this (see `demos/ustr/ustr.h` for a more complete example):
+    ```cpp
+    // demos/ustr/ustr.h (example stub)
+    #pragma once
+    #include <string>
+    #include <sstream> // For std::ostringstream
+    // Add includes for types you want to support, e.g., <vector>, <map>
+
+    namespace ustr {
+
+    template <typename T>
+    inline std::string to_string(const T& value) {
+        std::ostringstream oss;
+        oss << value; // Default implementation
+        return oss.str();
+    }
+
+    // Add specializations as needed
+    // inline std::string to_string(const std::vector<int>& vec) { ... }
+
+    } // namespace ustr
+    ```
+
+3.  **Link `ulog`**: When `ULOG_USE_USTR` is defined, `ulog` will call `::ustr::to_string()` instead of its internal `ulog::ustr::to_string()`.
+
+**Example Usage:**
+
+```cpp
+#define ULOG_USE_USTR
+#include "ulog/ulog.h"
+#include "path/to/your/ustr.h" // Make sure this path is correct
+
+// Example with a C-style array (assuming ustr.h has an overload for it)
+int main() {
+    auto logger = ulog::getLogger("UstrApp");
+    int c_array[] = {10, 20, 30};
+    logger.info("C-style array: {?}", c_array); 
+    // If ustr::to_string supports arrays, it will be formatted accordingly.
+
+    std::vector<std::string> my_vector = {"hello", "ustr"};
+    logger.info("STL container (vector): {?}", my_vector);
+    // If ustr::to_string supports std::vector<std::string>, it will be used.
+    return 0;
+}
+```
+
+Refer to the `demos/demo_ustr_integration.cpp` and `demos/ustr/ustr.h` for a runnable example.
 
 ## Building and Testing
 

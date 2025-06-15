@@ -54,6 +54,43 @@
 #include <ctime>
 #include <type_traits>
 
+#ifdef ULOG_USE_USTR
+#include "ustr/ustr.h" // Assuming ustr.h is in an include path accessible as "ustr/ustr.h"
+#else
+namespace ulog {
+namespace ustr {
+    /**
+     * @brief Convert value to string using stringstream
+     * @tparam T Type of value to convert
+     * @param value Value to convert
+     * @return String representation of value
+     */
+    template<typename T>
+    std::string to_string(const T& value) {
+        std::ostringstream oss;
+        oss << value;
+        return oss.str();
+    }
+    
+    /**
+     * @brief Specialization for std::string
+     */
+    template<>
+    inline std::string to_string<std::string>(const std::string& value) {
+        return value;
+    }
+    
+    /**
+     * @brief Specialization for const char*
+     */
+    template<>
+    inline std::string to_string<const char*>(const char* const& value) {
+        return std::string(value);
+    }
+}
+} // namespace ulog
+#endif // ULOG_USE_USTR
+
 namespace ulog {
 
 /**
@@ -84,40 +121,6 @@ inline std::string to_string(LogLevel level) {
         case LogLevel::ERROR: return "ERROR";
         case LogLevel::FATAL: return "FATAL";
         default: return "UNKNOWN";
-    }
-}
-
-/**
- * @brief Simple string utility functions
- */
-namespace ustr {
-    /**
-     * @brief Convert value to string using stringstream
-     * @tparam T Type of value to convert
-     * @param value Value to convert
-     * @return String representation of value
-     */
-    template<typename T>
-    std::string to_string(const T& value) {
-        std::ostringstream oss;
-        oss << value;
-        return oss.str();
-    }
-    
-    /**
-     * @brief Specialization for std::string
-     */
-    template<>
-    inline std::string to_string<std::string>(const std::string& value) {
-        return value;
-    }
-    
-    /**
-     * @brief Specialization for const char*
-     */
-    template<>
-    inline std::string to_string<const char*>(const char* const& value) {
-        return std::string(value);
     }
 }
 
@@ -295,7 +298,11 @@ public:
      */
     template<typename... Args>
     static std::string format(const std::string& format, Args&&... args) {
-        std::vector<std::string> arg_strings = {ustr::to_string(args)...};
+#ifdef ULOG_USE_USTR
+        std::vector<std::string> arg_strings = {::ustr::to_string(args)...};
+#else
+        std::vector<std::string> arg_strings = {ulog::ustr::to_string(args)...};
+#endif // ULOG_USE_USTR
         return format_impl(format, arg_strings);
     }
 

@@ -103,6 +103,15 @@ add_executable(demo_container_formatting
 )
 target_link_libraries(demo_container_formatting ulog)
 
+add_executable(demo_ustr_integration
+    demos/demo_ustr_integration.cpp
+)
+target_link_libraries(demo_ustr_integration ulog)
+# Add the demos directory to the include path for demo_ustr_integration
+# so it can find "ustr/ustr.h"
+target_include_directories(demo_ustr_integration PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/demos)
+
+
 # Add tests to CTest
 add_test(NAME test_logger COMMAND test_logger)
 add_test(NAME test_buffer COMMAND test_buffer)
