@@ -112,22 +112,22 @@ target_link_libraries(demo_ustr_integration ulog)
 target_include_directories(demo_ustr_integration PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/demos)
 
 add_executable(demo_buffer_benchmark_no_mutex
-    demos/demo_buffer_benchmark_no_mutex.cpp
+    demos/benchmarks/demo_buffer_benchmark_no_mutex.cpp
 )
 target_link_libraries(demo_buffer_benchmark_no_mutex ulog)
 
 add_executable(demo_buffer_benchmark_with_mutex
-    demos/demo_buffer_benchmark_with_mutex.cpp
+    demos/benchmarks/demo_buffer_benchmark_with_mutex.cpp
 )
 target_link_libraries(demo_buffer_benchmark_with_mutex ulog)
 
 add_executable(demo_observer_benchmark_with_mutex
-    demos/demo_observer_benchmark_with_mutex.cpp
+    demos/benchmarks/demo_observer_benchmark_with_mutex.cpp
 )
 target_link_libraries(demo_observer_benchmark_with_mutex ulog)
 
 add_executable(demo_observer_benchmark_no_mutex
-    demos/demo_observer_benchmark_no_mutex.cpp
+    demos/benchmarks/demo_observer_benchmark_no_mutex.cpp
 )
 target_link_libraries(demo_observer_benchmark_no_mutex ulog)
 

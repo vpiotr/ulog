@@ -297,6 +297,9 @@ The project includes convenient shell scripts for common operations:
 # Run demo applications
 ./run_demos.sh
 
+# Run performance benchmarks
+./run_benchmarks.sh
+
 # Generate Doxygen documentation (requires Doxygen)
 ./build_docs.sh
 ```
@@ -494,8 +497,13 @@ Define these macros **before** including `ulog.h`:
 
 Use the provided benchmark demos to compare performance:
 
+Use the provided benchmark script to compare performance:
+
 ```bash
-# Build and run benchmarks
+# Run all benchmarks
+./run_benchmarks.sh
+
+# Or build and run specific benchmarks manually
 cd build
 make demo_buffer_benchmark_with_mutex demo_buffer_benchmark_no_mutex
 make demo_observer_benchmark_with_mutex demo_observer_benchmark_no_mutex
@@ -525,10 +533,13 @@ See the `demos/` directory for comprehensive examples:
 - `demos/demo_cerr_observer.cpp` - Error message redirection to stderr via observer pattern with multiple observer support, RAII management, and exception safety
 - `demos/demo_exception_formatting.cpp` - Automatic exception formatting with custom exception wrappers, nested exception handling, system error integration, and real-world scenarios
 - `demos/demo_ustr_integration.cpp` - Integration with external ustr.h library for enhanced string conversion capabilities
-- `demos/demo_buffer_benchmark_with_mutex.cpp` - Buffer write performance benchmark with mutex protection enabled
-- `demos/demo_buffer_benchmark_no_mutex.cpp` - Buffer write performance benchmark with mutex protection disabled (single-threaded only)
-- `demos/demo_observer_benchmark_with_mutex.cpp` - Observer notification performance benchmark with mutex protection enabled
-- `demos/demo_observer_benchmark_no_mutex.cpp` - Observer notification performance benchmark with mutex protection disabled (single-threaded only)
+
+### Performance Benchmarks
+
+- `demos/benchmarks/demo_buffer_benchmark_with_mutex.cpp` - Buffer write performance benchmark with mutex protection enabled
+- `demos/benchmarks/demo_buffer_benchmark_no_mutex.cpp` - Buffer write performance benchmark with mutex protection disabled (single-threaded only)
+- `demos/benchmarks/demo_observer_benchmark_with_mutex.cpp` - Observer notification performance benchmark with mutex protection enabled
+- `demos/benchmarks/demo_observer_benchmark_no_mutex.cpp` - Observer notification performance benchmark with mutex protection disabled (single-threaded only)
 
 ## Contributing
 
