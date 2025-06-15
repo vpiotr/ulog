@@ -34,4 +34,5 @@ echo "  - Tests: $BUILD_DIR/test_logger, $BUILD_DIR/test_buffer, $BUILD_DIR/test
 echo "  - Demo:  $BUILD_DIR/ulog_demo"
 echo ""
 echo "To run tests: ./run_tests.sh"
-echo "To run demo:  ./run_demo.sh"
+echo "To run demo:  ./run_demos.sh"
+echo "To run benchmarks: ./run_benchmarks.sh"
