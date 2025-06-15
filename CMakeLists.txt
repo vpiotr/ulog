@@ -112,24 +112,28 @@ target_link_libraries(demo_ustr_integration ulog)
 target_include_directories(demo_ustr_integration PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/demos)
 
 add_executable(demo_buffer_benchmark_no_mutex
-    demos/benchmarks/demo_buffer_benchmark_no_mutex.cpp
+    benchmarks/demo_buffer_benchmark_no_mutex.cpp
 )
 target_link_libraries(demo_buffer_benchmark_no_mutex ulog)
+target_include_directories(demo_buffer_benchmark_no_mutex PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks)
 
 add_executable(demo_buffer_benchmark_with_mutex
-    demos/benchmarks/demo_buffer_benchmark_with_mutex.cpp
+    benchmarks/demo_buffer_benchmark_with_mutex.cpp
 )
 target_link_libraries(demo_buffer_benchmark_with_mutex ulog)
+target_include_directories(demo_buffer_benchmark_with_mutex PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks)
 
 add_executable(demo_observer_benchmark_with_mutex
-    demos/benchmarks/demo_observer_benchmark_with_mutex.cpp
+    benchmarks/demo_observer_benchmark_with_mutex.cpp
 )
 target_link_libraries(demo_observer_benchmark_with_mutex ulog)
+target_include_directories(demo_observer_benchmark_with_mutex PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks)
 
 add_executable(demo_observer_benchmark_no_mutex
-    demos/benchmarks/demo_observer_benchmark_no_mutex.cpp
+    benchmarks/demo_observer_benchmark_no_mutex.cpp
 )
 target_link_libraries(demo_observer_benchmark_no_mutex ulog)
+target_include_directories(demo_observer_benchmark_no_mutex PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks)
 
 
 # Add tests to CTest
