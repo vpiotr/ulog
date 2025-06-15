@@ -18,6 +18,7 @@
  * - Observer pattern for log entry handling
  * - Flexible message formatting with anonymous and positional parameters
  * - RAII-based resource management
+ * - Optional mutex configuration for performance tuning
  * 
  * @section usage_sec Basic Usage
  * 
@@ -90,6 +91,19 @@ namespace ustr {
 }
 } // namespace ulog
 #endif // ULOG_USE_USTR
+
+// Optional mutex configuration
+#ifndef ULOG_USE_MUTEX_FOR_CONSOLE
+#define ULOG_USE_MUTEX_FOR_CONSOLE 1  ///< Enable mutex for console operations (default: enabled)
+#endif
+
+#ifndef ULOG_USE_MUTEX_FOR_BUFFER
+#define ULOG_USE_MUTEX_FOR_BUFFER 1   ///< Enable mutex for buffer operations (default: enabled)
+#endif
+
+#ifndef ULOG_USE_MUTEX_FOR_OBSERVERS
+#define ULOG_USE_MUTEX_FOR_OBSERVERS 1 ///< Enable mutex for observer operations (default: enabled)
+#endif
 
 namespace ulog {
 
@@ -461,11 +475,21 @@ public:
      * @brief Flush console output
      */
     void flush() {
-        std::lock_guard<std::mutex> lock(mutex_);
+        // Flush console with optional mutex
         if (console_enabled_) {
+#if ULOG_USE_MUTEX_FOR_CONSOLE
+            std::lock_guard<std::mutex> console_lock(console_mutex_);
+#endif
             std::cout << std::endl;
         }
-        notify_observers_flush();
+        
+        // Notify observers with optional mutex
+        {
+#if ULOG_USE_MUTEX_FOR_OBSERVERS
+            std::lock_guard<std::mutex> observers_lock(observers_mutex_);
+#endif
+            notify_observers_flush();
+        }
     }
     
     /**
@@ -473,7 +497,9 @@ public:
      * @param observer Observer to add
      */
     void add_observer(std::shared_ptr<LogObserver> observer) {
-        std::lock_guard<std::mutex> lock(mutex_);
+#if ULOG_USE_MUTEX_FOR_OBSERVERS
+        std::lock_guard<std::mutex> observers_lock(observers_mutex_);
+#endif
         observers_.push_back(observer);
         observer->handleRegistered(name_);
     }
@@ -483,7 +509,9 @@ public:
      * @param observer Observer to remove
      */
     void remove_observer(std::shared_ptr<LogObserver> observer) {
-        std::lock_guard<std::mutex> lock(mutex_);
+#if ULOG_USE_MUTEX_FOR_OBSERVERS
+        std::lock_guard<std::mutex> observers_lock(observers_mutex_);
+#endif
         auto it = std::find(observers_.begin(), observers_.end(), observer);
         if (it != observers_.end()) {
             (*it)->handleUnregistered(name_);
@@ -640,17 +668,29 @@ private:
         
         auto entry = LogEntry(std::chrono::system_clock::now(), level, name_, message);
         
-        std::lock_guard<std::mutex> lock(mutex_);
-        
+        // Console output with optional mutex
         if (console_enabled_) {
+#if ULOG_USE_MUTEX_FOR_CONSOLE
+            std::lock_guard<std::mutex> console_lock(console_mutex_);
+#endif
             std::cout << entry.formatted_message() << "\n";
         }
         
+        // Buffer operations with optional mutex
         if (buffer_enabled_ && buffer_) {
+#if ULOG_USE_MUTEX_FOR_BUFFER
+            std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
+#endif
             buffer_->add(entry);
         }
         
-        notify_observers_message(entry);
+        // Observer notifications with optional mutex
+        {
+#if ULOG_USE_MUTEX_FOR_OBSERVERS
+            std::lock_guard<std::mutex> observers_lock(observers_mutex_);
+#endif
+            notify_observers_message(entry);
+        }
     }
     
     void notify_observers_message(const LogEntry& entry) {
@@ -667,6 +707,15 @@ private:
     
     std::string name_;
     mutable std::mutex mutex_;
+#if ULOG_USE_MUTEX_FOR_CONSOLE
+    mutable std::mutex console_mutex_;
+#endif
+#if ULOG_USE_MUTEX_FOR_BUFFER
+    mutable std::mutex buffer_mutex_;
+#endif
+#if ULOG_USE_MUTEX_FOR_OBSERVERS
+    mutable std::mutex observers_mutex_;
+#endif
     std::atomic<bool> console_enabled_;
     std::atomic<bool> buffer_enabled_;
     std::atomic<LogLevel> log_level_;

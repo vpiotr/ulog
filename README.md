@@ -455,6 +455,62 @@ For global logger (empty name), the logger name part is omitted:
 - **Format optimization**: Fast parameter substitution
 - **Compile-time optimization**: Template-based design for optimal performance
 
+## Optional Mutex Configuration
+
+ulog provides compile-time control over mutex usage for fine-tuning performance vs. thread-safety:
+
+### Configuration Macros
+
+- `ULOG_USE_MUTEX_FOR_CONSOLE` - Controls console output mutex (default: 1/enabled)
+- `ULOG_USE_MUTEX_FOR_BUFFER` - Controls buffer operations mutex (default: 1/enabled)
+- `ULOG_USE_MUTEX_FOR_OBSERVERS` - Controls observer operations mutex (default: 1/enabled)
+
+### Usage
+
+Define these macros **before** including `ulog.h`:
+
+```cpp
+#define ULOG_USE_MUTEX_FOR_CONSOLE 0   // Disable console mutex
+#define ULOG_USE_MUTEX_FOR_BUFFER 0    // Disable buffer mutex
+#define ULOG_USE_MUTEX_FOR_OBSERVERS 0 // Disable observer mutex
+#include "ulog/ulog.h"
+```
+
+### Performance Trade-offs
+
+**With Mutexes (Default - Thread-Safe):**
+- ✅ Thread-safe console output
+- ✅ Thread-safe buffer operations  
+- ✅ Thread-safe observer notifications
+- ✅ No data races or corruption
+- ⚠️ Slight performance overhead in single-threaded scenarios
+
+**Without Mutexes (Performance Optimized):**
+- ✅ Maximum performance in single-threaded scenarios
+- ⚠️ **NOT thread-safe** - only use in single-threaded applications
+- ⚠️ Undefined behavior if used from multiple threads
+
+### Benchmark Results
+
+Use the provided benchmark demos to compare performance:
+
+```bash
+# Build and run benchmarks
+cd build
+make demo_buffer_benchmark_with_mutex demo_buffer_benchmark_no_mutex
+make demo_observer_benchmark_with_mutex demo_observer_benchmark_no_mutex
+
+# Buffer performance benchmarks
+./demo_buffer_benchmark_with_mutex     # With mutex protection
+./demo_buffer_benchmark_no_mutex       # Without mutex protection
+
+# Observer performance benchmarks  
+./demo_observer_benchmark_with_mutex   # With observer mutex protection
+./demo_observer_benchmark_no_mutex     # Without observer mutex protection
+```
+
+**Note:** Observer registry management (add/remove observers) uses mutex protection based on the `ULOG_USE_MUTEX_FOR_OBSERVERS` setting.
+
 ## Examples
 
 See the `demos/` directory for comprehensive examples:
@@ -469,6 +525,10 @@ See the `demos/` directory for comprehensive examples:
 - `demos/demo_cerr_observer.cpp` - Error message redirection to stderr via observer pattern with multiple observer support, RAII management, and exception safety
 - `demos/demo_exception_formatting.cpp` - Automatic exception formatting with custom exception wrappers, nested exception handling, system error integration, and real-world scenarios
 - `demos/demo_ustr_integration.cpp` - Integration with external ustr.h library for enhanced string conversion capabilities
+- `demos/demo_buffer_benchmark_with_mutex.cpp` - Buffer write performance benchmark with mutex protection enabled
+- `demos/demo_buffer_benchmark_no_mutex.cpp` - Buffer write performance benchmark with mutex protection disabled (single-threaded only)
+- `demos/demo_observer_benchmark_with_mutex.cpp` - Observer notification performance benchmark with mutex protection enabled
+- `demos/demo_observer_benchmark_no_mutex.cpp` - Observer notification performance benchmark with mutex protection disabled (single-threaded only)
 
 ## Contributing
 
