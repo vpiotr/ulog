@@ -81,6 +81,91 @@ The `DebugObserver` class captures and tracks debug scope messages:
 - **Monitoring Capability**: Track program flow with observer pattern
 - **Simple Integration**: Just wrap code blocks with DebugScope
 
+## SlowOpGuard Extension
+
+**File:** `include/slow_op_guard.h`
+
+The SlowOpGuard extension provides RAII-based automatic monitoring of slow operations. It monitors operation duration and logs warnings when operations exceed specified time limits, making it useful for performance monitoring and debugging.
+
+### Features
+
+- **RAII Operation Monitoring**: Automatic timing from construction to destruction
+- **Configurable Thresholds**: Set custom time limits for different operation types
+- **Multiple Log Levels**: Support for all ulog levels (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)
+- **Static Messages**: Simple string messages with automatic elapsed time prefixing
+- **Lambda Message Suppliers**: Dynamic message generation based on elapsed time and context
+- **Operation Introspection**: Query current elapsed time and slow status during operation
+- **Exception Safety**: Logging occurs even when exceptions are thrown
+- **High Performance**: Minimal overhead when operations are fast
+
+### Usage Example
+
+```cpp
+#include "ulog/ulog.h"
+#include "extensions/include/slow_op_guard.h"
+
+using ulog::extensions::SlowOpGuard;
+
+auto& logger = ulog::getLogger("performance");
+
+// Static message version
+{
+    SlowOpGuard guard(logger, std::chrono::milliseconds(100), 
+                     ulog::LogLevel::WARN, "database query");
+    // perform database operation
+} // logs "150 ms - database query" if operation took > 100ms
+
+// Lambda message version with context
+{
+    std::string user_id = "user_123";
+    SlowOpGuard guard(logger, std::chrono::milliseconds(50), 
+                     ulog::LogLevel::ERROR, 
+                     [user_id](auto elapsed) {
+                         return "Slow user operation for " + user_id + 
+                                ": " + std::to_string(elapsed.count()) + "ms";
+                     });
+    // perform user-specific operation
+}
+
+// Introspection during operation
+{
+    SlowOpGuard guard(logger, std::chrono::milliseconds(200), 
+                     ulog::LogLevel::WARN, "batch processing");
+    
+    for (int i = 0; i < items.size(); ++i) {
+        process_item(items[i]);
+        
+        if (guard.is_slow()) {
+            logger.warn("Batch processing running slow: {}ms for {} items", 
+                       guard.elapsed().count(), i + 1);
+        }
+    }
+}
+```
+
+### SlowOpGuard Class
+
+The `SlowOpGuard` class provides automatic operation monitoring:
+
+| Method | Description |
+|--------|-------------|
+| `SlowOpGuard(logger, limit, level, message)` | Constructor with static message |
+| `SlowOpGuard(logger, limit, level, supplier)` | Constructor with lambda message supplier |
+| `~SlowOpGuard()` | Destructor - logs if operation was slow |
+| `elapsed()` | Get current elapsed time |
+| `is_slow()` | Check if currently exceeds threshold |
+| `get_time_limit()` | Get configured time limit |
+
+### Key Benefits
+
+- **Performance Monitoring**: Identify slow operations in production
+- **Debugging Aid**: Understand which operations cause delays
+- **Threshold Flexibility**: Different limits for different operation types
+- **Rich Logging**: Context-aware messages with lambda suppliers
+- **Zero Overhead**: No logging cost when operations are fast
+- **Exception Safety**: Ensures monitoring even during error conditions
+- **Real-time Monitoring**: Check operation status during execution
+
 ## Buffer Assertions Extension
 
 **File:** `include/buffer_assertions.h`

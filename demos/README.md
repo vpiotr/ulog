@@ -270,7 +270,69 @@ This demo showcases a custom DebugScope class that automatically logs "Entering:
    - Demonstrates when scope messages appear/disappear
    - Useful for production vs debug environments
 
-### 8. demo_cerr_observer.cpp
+### 8. demo_slow_op_guard.cpp
+**SlowOpGuard RAII Demo** - Demonstrates the SlowOpGuard pattern for monitoring slow operations.
+
+This demo showcases the SlowOpGuard extension that automatically monitors operation duration and logs warnings when operations exceed specified time limits. It includes a fake database stub for realistic testing scenarios:
+
+#### Features:
+- **SlowOpGuard Class**: RAII class that monitors operation duration and logs slow operations
+- **Configurable Thresholds**: Set custom time limits for different operation types
+- **Multiple Log Levels**: Support for TRACE, DEBUG, INFO, WARN, ERROR, and FATAL levels
+- **Static Messages**: Simple string messages with automatic elapsed time prefixing
+- **Lambda Message Suppliers**: Dynamic message generation based on elapsed time
+- **Operation Introspection**: Query current elapsed time and slow status during operation
+- **Database Stub**: Realistic simulation of variable-duration database operations
+
+#### Demo Scenarios:
+
+1. **Basic SlowOpGuard with Static Messages**
+   - Fast operations that don't trigger warnings
+   - Slow operations that trigger log messages
+   - Different log levels (WARN, ERROR) for different severity
+
+2. **Lambda Message Suppliers**
+   - Custom message formatting with elapsed time
+   - Performance classification (CRITICAL, POOR, ACCEPTABLE)
+   - Contextual information (user ID, session ID)
+
+3. **Nested Operations**
+   - Batch processing with nested guards
+   - Individual item monitoring within larger operations
+   - Hierarchical slow operation detection
+
+4. **Real-World Scenarios**
+   - API endpoint monitoring with 200ms threshold
+   - File processing with dynamic thresholds based on file size
+   - Database transaction monitoring with deadlock detection
+
+5. **Guard Introspection**
+   - Real-time monitoring of operation progress
+   - Checking if operations are currently slow
+   - Mid-operation warnings for long-running tasks
+
+#### Usage Examples:
+
+```cpp
+// Static message version
+{
+    SlowOpGuard guard(logger, std::chrono::milliseconds(100), 
+                     ulog::LogLevel::WARN, "slow database query");
+    // perform database operation
+} // logs "150 ms - slow database query" if operation took > 100ms
+
+// Lambda message version
+{
+    SlowOpGuard guard(logger, std::chrono::milliseconds(50), 
+                     ulog::LogLevel::ERROR, 
+                     [](auto elapsed) { 
+                         return "critical operation took " + std::to_string(elapsed.count()) + "ms"; 
+                     });
+    // perform critical operation
+} // logs custom message if operation took > 50ms
+```
+
+### 9. demo_cerr_observer.cpp
 **Cerr Observer Demo** - Demonstrates logging errors to stderr via observer.
 
 This demo showcases how to create a custom observer that filters error messages and redirects them to stderr (standard error) while allowing normal messages to go to stdout (standard output):
@@ -508,6 +570,7 @@ make demo_custom_formatting     # For the custom types demo
 make demo_container_formatting  # For the container formatting demo
 make demo_auto_flushing         # For the auto-flushing scope demo
 make demo_debug_scope           # For the debug scope RAII demo
+make demo_slow_op_guard         # For the slow operation guard demo
 make demo_cerr_observer         # For the cerr observer demo
 make demo_exception_formatting  # For the exception formatting demo
 make demo_buffer_assertions     # For the buffer assertions extension demo
@@ -534,6 +597,9 @@ make ulog_demo                  # For the main demo
 
 # Run the debug scope RAII demo
 ./demo_debug_scope
+
+# Run the slow operation guard demo
+./demo_slow_op_guard
 
 # Run the cerr observer demo
 ./demo_cerr_observer

@@ -601,6 +601,7 @@ See the `demos/` directory for comprehensive examples:
 - `demos/demo_container_formatting.cpp` - Advanced container formatting examples with STL containers and custom types
 - `demos/demo_auto_flushing.cpp` - RAII auto-flushing scope examples including basic usage, nested scopes, multiple loggers, and exception safety
 - `demos/demo_debug_scope.cpp` - DebugScope RAII pattern with observer integration for automatic scope entry/exit logging, nested scopes, multiple loggers, and exception safety
+- `demos/demo_slow_op_guard.cpp` - SlowOpGuard RAII pattern for monitoring slow operations with configurable thresholds, static and lambda message suppliers, nested operations, and real-world scenarios
 - `demos/demo_cerr_observer.cpp` - Error message redirection to stderr via observer pattern with multiple observer support, RAII management, and exception safety
 - `demos/demo_exception_formatting.cpp` - Automatic exception formatting with custom exception wrappers, nested exception handling, system error integration, and real-world scenarios
 - `demos/demo_ustr_integration.cpp` - Integration with external ustr.h library for enhanced string conversion capabilities

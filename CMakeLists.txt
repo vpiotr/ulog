@@ -88,6 +88,14 @@ add_executable(demo_debug_scope
 )
 target_link_libraries(demo_debug_scope ulog)
 
+add_executable(demo_slow_op_guard
+    demos/demo_slow_op_guard.cpp
+)
+target_link_libraries(demo_slow_op_guard ulog)
+target_include_directories(demo_slow_op_guard PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/demos/extensions/include
+)
+
 add_executable(demo_cerr_observer
     demos/demo_cerr_observer.cpp
 )
