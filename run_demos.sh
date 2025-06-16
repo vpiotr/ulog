@@ -18,6 +18,9 @@ CERR_OBSERVER_DEMO_EXECUTABLE="$BUILD_DIR/demo_cerr_observer"
 EXCEPTION_FORMATTING_DEMO_EXECUTABLE="$BUILD_DIR/demo_exception_formatting"
 CONTAINER_FORMATTING_DEMO_EXECUTABLE="$BUILD_DIR/demo_container_formatting"
 USTR_INTEGRATION_DEMO_EXECUTABLE="$BUILD_DIR/demo_ustr_integration"
+THREADED_BUFFER_STATS_DEMO_EXECUTABLE="$BUILD_DIR/demo_threaded_buffer_stats"
+BUFFER_ASSERTIONS_DEMO_EXECUTABLE="$BUILD_DIR/demo_buffer_assertions"
+BUFFER_STATS_DEMO_EXECUTABLE="$BUILD_DIR/demo_buffer_stats"
 
 echo "=== ulog Demos Execution Script ==="
 
@@ -78,6 +81,21 @@ if [ ! -f "$USTR_INTEGRATION_DEMO_EXECUTABLE" ]; then
     exit 1
 fi
 
+if [ ! -f "$THREADED_BUFFER_STATS_DEMO_EXECUTABLE" ]; then
+    echo "Error: Threaded buffer stats demo executable not found. Please run ./rebuild.sh first."
+    exit 1
+fi
+
+if [ ! -f "$BUFFER_ASSERTIONS_DEMO_EXECUTABLE" ]; then
+    echo "Error: Buffer assertions demo executable not found. Please run ./rebuild.sh first."
+    exit 1
+fi
+
+if [ ! -f "$BUFFER_STATS_DEMO_EXECUTABLE" ]; then
+    echo "Error: Buffer stats demo executable not found. Please run ./rebuild.sh first."
+    exit 1
+fi
+
 echo "Running demos..."
 echo "Main demo executable: $MAIN_DEMO_EXECUTABLE"
 echo "File observer demo executable: $FILE_OBSERVER_DEMO_EXECUTABLE"
@@ -89,6 +107,9 @@ echo "Cerr observer demo executable: $CERR_OBSERVER_DEMO_EXECUTABLE"
 echo "Exception formatting demo executable: $EXCEPTION_FORMATTING_DEMO_EXECUTABLE"
 echo "Container formatting demo executable: $CONTAINER_FORMATTING_DEMO_EXECUTABLE"
 echo "Ustr integration demo executable: $USTR_INTEGRATION_DEMO_EXECUTABLE"
+echo "Threaded buffer stats demo executable: $THREADED_BUFFER_STATS_DEMO_EXECUTABLE"
+echo "Buffer assertions demo executable: $BUFFER_ASSERTIONS_DEMO_EXECUTABLE"
+echo "Buffer stats demo executable: $BUFFER_STATS_DEMO_EXECUTABLE"
 echo ""
 
 # Run main demo
@@ -153,7 +174,25 @@ echo "=== Running Ustr Integration Demo ==="
 USTR_INTEGRATION_DEMO_RESULT=$?
 
 echo ""
-if [ $MAIN_DEMO_RESULT -eq 0 ] && [ $FILE_OBSERVER_DEMO_RESULT -eq 0 ] && [ $LOG_LEVEL_FILTERING_DEMO_RESULT -eq 0 ] && [ $CUSTOM_FORMATTING_DEMO_RESULT -eq 0 ] && [ $AUTO_FLUSHING_DEMO_RESULT -eq 0 ] && [ $DEBUG_SCOPE_DEMO_RESULT -eq 0 ] && [ $CERR_OBSERVER_DEMO_RESULT -eq 0 ] && [ $EXCEPTION_FORMATTING_DEMO_RESULT -eq 0 ] && [ $CONTAINER_FORMATTING_DEMO_RESULT -eq 0 ] && [ $USTR_INTEGRATION_DEMO_RESULT -eq 0 ]; then
+echo "=== Running Threaded Buffer Stats Demo ==="
+"$THREADED_BUFFER_STATS_DEMO_EXECUTABLE"
+
+THREADED_BUFFER_STATS_DEMO_RESULT=$?
+
+echo ""
+echo "=== Running Buffer Assertions Demo ==="
+"$BUFFER_ASSERTIONS_DEMO_EXECUTABLE"
+
+BUFFER_ASSERTIONS_DEMO_RESULT=$?
+
+echo ""
+echo "=== Running Buffer Stats Demo ==="
+"$BUFFER_STATS_DEMO_EXECUTABLE"
+
+BUFFER_STATS_DEMO_RESULT=$?
+
+echo ""
+if [ $MAIN_DEMO_RESULT -eq 0 ] && [ $FILE_OBSERVER_DEMO_RESULT -eq 0 ] && [ $LOG_LEVEL_FILTERING_DEMO_RESULT -eq 0 ] && [ $CUSTOM_FORMATTING_DEMO_RESULT -eq 0 ] && [ $AUTO_FLUSHING_DEMO_RESULT -eq 0 ] && [ $DEBUG_SCOPE_DEMO_RESULT -eq 0 ] && [ $CERR_OBSERVER_DEMO_RESULT -eq 0 ] && [ $EXCEPTION_FORMATTING_DEMO_RESULT -eq 0 ] && [ $CONTAINER_FORMATTING_DEMO_RESULT -eq 0 ] && [ $USTR_INTEGRATION_DEMO_RESULT -eq 0 ] && [ $THREADED_BUFFER_STATS_DEMO_RESULT -eq 0 ] && [ $BUFFER_ASSERTIONS_DEMO_RESULT -eq 0 ] && [ $BUFFER_STATS_DEMO_RESULT -eq 0 ]; then
     echo "=== All demos completed successfully! ==="
     echo ""
     echo "Generated log files from file observer demo:"
@@ -186,5 +225,8 @@ else
     echo "Exception formatting demo exit code: $EXCEPTION_FORMATTING_DEMO_RESULT"
     echo "Container formatting demo exit code: $CONTAINER_FORMATTING_DEMO_RESULT"
     echo "Ustr integration demo exit code: $USTR_INTEGRATION_DEMO_RESULT"
+    echo "Threaded buffer stats demo exit code: $THREADED_BUFFER_STATS_DEMO_RESULT"
+    echo "Buffer assertions demo exit code: $BUFFER_ASSERTIONS_DEMO_RESULT"
+    echo "Buffer stats demo exit code: $BUFFER_STATS_DEMO_RESULT"
     exit 1
 fi
