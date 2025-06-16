@@ -118,7 +118,7 @@ protected:
      * @brief Setup called before each iteration
      * @param iteration Current iteration number (0-based)
      */
-    virtual void iteration_setup(int iteration) {}
+    virtual void iteration_setup(int iteration) { (void)iteration; }
     
     /**
      * @brief Run a single iteration of the benchmark
@@ -131,7 +131,7 @@ protected:
      * @brief Cleanup called after each iteration
      * @param iteration Current iteration number (0-based)
      */
-    virtual void iteration_cleanup(int iteration) {}
+    virtual void iteration_cleanup(int iteration) { (void)iteration; }
     
     /**
      * @brief Verify benchmark results (optional)

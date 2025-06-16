@@ -1,10 +1,10 @@
-#include "ulog/ulog.h"
-#include "include/ulog_benchmark.h"
-
 // Disable observer mutex for performance comparison
 #define ULOG_USE_MUTEX_FOR_CONSOLE 1
 #define ULOG_USE_MUTEX_FOR_BUFFER 1
 #define ULOG_USE_MUTEX_FOR_OBSERVERS 0
+
+#include "ulog/ulog.h"
+#include "include/ulog_benchmark.h"
 
 /**
  * @brief Observer benchmark with mutex protection disabled

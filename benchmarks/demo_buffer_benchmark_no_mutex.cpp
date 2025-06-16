@@ -1,11 +1,11 @@
-#include "ulog/ulog.h"
-#include "include/ulog_benchmark.h"
-
 // Disable mutex for buffer operations
 #define ULOG_USE_MUTEX_FOR_BUFFER 0
 // Disable mutex for observer operations
 #define ULOG_USE_MUTEX_FOR_OBSERVERS 0
 // Keep console mutex enabled (default)
+
+#include "ulog/ulog.h"
+#include "include/ulog_benchmark.h"
 
 /**
  * @brief Buffer benchmark with mutex protection disabled
