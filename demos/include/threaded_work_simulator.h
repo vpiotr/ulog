@@ -12,6 +12,7 @@
  */
 
 #include "ulog/ulog.h"
+#include "thread_aware_logger.h"
 #include <thread>
 #include <chrono>
 #include <random>
@@ -42,10 +43,10 @@ class ThreadedWorkSimulator {
 public:
     /**
      * @brief Simulate database worker operations
-     * @param logger Logger to write to
+     * @param logger Thread-aware logger to write to
      * @param config Worker configuration
      */
-    static void simulateDatabaseWork(ulog::Logger& logger, const WorkerConfig& config) {
+    static void simulateDatabaseWork(ulog::extensions::ThreadAwareLogger& logger, const WorkerConfig& config) {
         std::mt19937 rng(std::random_device{}());
         
         logger.info("{0} starting with {1} operations", config.worker_name, config.num_operations);
@@ -69,10 +70,10 @@ public:
     
     /**
      * @brief Simulate web handler operations
-     * @param logger Logger to write to
+     * @param logger Thread-aware logger to write to
      * @param config Worker configuration
      */
-    static void simulateWebWork(ulog::Logger& logger, const WorkerConfig& config) {
+    static void simulateWebWork(ulog::extensions::ThreadAwareLogger& logger, const WorkerConfig& config) {
         std::mt19937 rng(std::random_device{}());
         std::uniform_int_distribution<> error_dist(1, 20); // 5% error rate
         
@@ -100,10 +101,10 @@ public:
     
     /**
      * @brief Simulate background processing operations
-     * @param logger Logger to write to
+     * @param logger Thread-aware logger to write to
      * @param config Worker configuration
      */
-    static void simulateBackgroundWork(ulog::Logger& logger, const WorkerConfig& config) {
+    static void simulateBackgroundWork(ulog::extensions::ThreadAwareLogger& logger, const WorkerConfig& config) {
         std::mt19937 rng(std::random_device{}());
         
         logger.info("{0} background processing started", config.worker_name);
@@ -125,10 +126,10 @@ public:
     
     /**
      * @brief Simulate system monitoring operations
-     * @param logger Logger to write to
+     * @param logger Thread-aware logger to write to
      * @param config Worker configuration
      */
-    static void simulateMonitoringWork(ulog::Logger& logger, const WorkerConfig& config) {
+    static void simulateMonitoringWork(ulog::extensions::ThreadAwareLogger& logger, const WorkerConfig& config) {
         std::mt19937 rng(std::random_device{}());
         std::uniform_int_distribution<> alert_dist(1, 10); // 10% alert rate
         

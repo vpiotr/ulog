@@ -34,6 +34,10 @@ struct ThreadReport {
     std::chrono::milliseconds avg_message_interval; ///< Average time between messages
     size_t error_count;                             ///< Number of error/fatal messages
     std::vector<std::string> top_message_prefixes;  ///< Most common message prefixes
+    size_t slow_operations_count;                   ///< Number of slow operations
+    std::chrono::milliseconds slowest_operation;    ///< Duration of slowest operation
+    size_t outlier_count;                           ///< Number of delay outliers
+    double error_rate;                              ///< Error rate as percentage
 };
 
 /**
@@ -133,8 +137,12 @@ private:
         report.thread_id = thread_id;
         report.message_count = entries.size();
         report.error_count = 0;
+        report.slow_operations_count = 0;
+        report.slowest_operation = std::chrono::milliseconds(0);
+        report.outlier_count = 0;
         
         if (entries.empty()) {
+            report.error_rate = 0.0;
             return report;
         }
         
@@ -149,16 +157,53 @@ private:
                 report.total_duration.count() / (entries.size() - 1));
         }
         
-        // Count errors and collect message prefixes
+        // Analyze entries for detailed statistics
         std::unordered_map<std::string, size_t> prefix_counts;
-        for (const auto& entry : entries) {
+        std::vector<std::chrono::milliseconds> intervals;
+        
+        for (size_t i = 0; i < entries.size(); ++i) {
+            const auto& entry = entries[i];
+            
+            // Count errors
             if (entry.level == LogLevel::ERROR || entry.level == LogLevel::FATAL) {
                 report.error_count++;
             }
             
-            // Extract first word as prefix
+            // Extract message prefix and count
             std::string prefix = extractMessagePrefix(entry.message);
             prefix_counts[prefix]++;
+            
+            // Calculate intervals for outlier detection
+            if (i > 0) {
+                auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    entry.timestamp - entries[i-1].timestamp);
+                intervals.push_back(interval);
+                
+                // Check for slow operations (SQL, AWS, etc.)
+                if (isSlowOperationPrefix(prefix) && interval > std::chrono::milliseconds(100)) {
+                    report.slow_operations_count++;
+                    if (interval > report.slowest_operation) {
+                        report.slowest_operation = interval;
+                    }
+                }
+            }
+        }
+        
+        // Calculate error rate
+        report.error_rate = (entries.size() > 0) ? 
+            (static_cast<double>(report.error_count) / entries.size() * 100.0) : 0.0;
+        
+        // Detect outliers (intervals significantly larger than 90th percentile)
+        if (!intervals.empty()) {
+            std::sort(intervals.begin(), intervals.end());
+            size_t p90_index = static_cast<size_t>(intervals.size() * 0.9);
+            auto p90_threshold = intervals[std::min(p90_index, intervals.size() - 1)];
+            
+            for (const auto& interval : intervals) {
+                if (interval > p90_threshold * 2) {  // 2x the 90th percentile
+                    report.outlier_count++;
+                }
+            }
         }
         
         // Get top 3 message prefixes
@@ -191,8 +236,15 @@ private:
         for (const auto& report : thread_reports) {
             aggregated.message_count += report.message_count;
             aggregated.error_count += report.error_count;
+            aggregated.slow_operations_count += report.slow_operations_count;
+            aggregated.outlier_count += report.outlier_count;
             aggregated.total_duration = std::max(aggregated.total_duration, report.total_duration);
+            aggregated.slowest_operation = std::max(aggregated.slowest_operation, report.slowest_operation);
         }
+        
+        // Calculate error rate
+        aggregated.error_rate = (aggregated.message_count > 0) ? 
+            (static_cast<double>(aggregated.error_count) / aggregated.message_count * 100.0) : 0.0;
         
         // Calculate average interval across all threads
         size_t total_intervals = 0;
@@ -234,6 +286,24 @@ private:
     }
     
     /**
+     * @brief Check if prefix indicates a slow operation
+     * @param prefix Message prefix to check
+     * @return True if prefix typically indicates slow operations
+     */
+    bool isSlowOperationPrefix(const std::string& prefix) const {
+        static const std::vector<std::string> slow_prefixes = {
+            "SQL_", "AWS_", "DB_", "CONN_", "QUERY_", "API_", "HTTP_", "UPLOAD_", "DOWNLOAD_"
+        };
+        
+        for (const auto& slow_prefix : slow_prefixes) {
+            if (prefix.find(slow_prefix) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
      * @brief Print report header
      */
     void printHeader() {
@@ -268,8 +338,10 @@ private:
                   << std::setw(12) << "Duration(ms)"
                   << std::setw(12) << "Avg Int(ms)"
                   << std::setw(8) << "Errors"
+                  << std::setw(8) << "SlowOps"
+                  << std::setw(10) << "Outliers"
                   << "Top Prefixes\n";
-        std::cout << std::string(80, '-') << "\n";
+        std::cout << std::string(95, '-') << "\n";
         
         for (const auto& report : thread_reports) {
             std::string thread_display = report.thread_id;
@@ -282,7 +354,9 @@ private:
                       << std::setw(10) << report.message_count
                       << std::setw(12) << report.total_duration.count()
                       << std::setw(12) << report.avg_message_interval.count()
-                      << std::setw(8) << report.error_count;
+                      << std::setw(8) << report.error_count
+                      << std::setw(8) << report.slow_operations_count
+                      << std::setw(10) << report.outlier_count;
                       
             // Print top prefixes
             for (size_t i = 0; i < report.top_message_prefixes.size(); ++i) {
@@ -302,10 +376,11 @@ private:
         std::cout << "AGGREGATED STATISTICS:\n";
         std::cout << "  Total Messages: " << aggregated.message_count << "\n";
         std::cout << "  Total Errors: " << aggregated.error_count << "\n";
-        std::cout << "  Error Rate: " 
-                  << (aggregated.message_count > 0 ? 
-                      (100.0 * aggregated.error_count / aggregated.message_count) : 0.0)
-                  << "%\n";
+        std::cout << "  Error Rate: " << std::fixed << std::setprecision(5) 
+                  << aggregated.error_rate << "%\n";
+        std::cout << "  Total Slow Operations: " << aggregated.slow_operations_count << "\n";
+        std::cout << "  Slowest Operation: " << aggregated.slowest_operation.count() << " ms\n";
+        std::cout << "  Total Outliers: " << aggregated.outlier_count << "\n";
         std::cout << "  Average Message Interval: " << aggregated.avg_message_interval.count() << " ms\n\n";
     }
     
