@@ -20,9 +20,22 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <ctime>
 
 namespace ulog {
 namespace extensions {
+
+/**
+ * @brief Detailed slow operation information
+ */
+struct SlowOperation {
+    std::chrono::system_clock::time_point timestamp; ///< When the operation started
+    LogLevel level;                                   ///< Log level
+    std::string thread_id;                           ///< Thread identifier
+    std::string prefix;                              ///< Operation prefix (e.g., SQL_SELECT)
+    std::string full_message;                        ///< Complete log message
+    std::chrono::milliseconds duration;              ///< Operation duration
+};
 
 /**
  * @brief Report data for a single thread
@@ -38,6 +51,7 @@ struct ThreadReport {
     std::chrono::milliseconds slowest_operation;    ///< Duration of slowest operation
     size_t outlier_count;                           ///< Number of delay outliers
     double error_rate;                              ///< Error rate as percentage
+    std::vector<SlowOperation> slow_operations;     ///< Detailed slow operations
 };
 
 /**
@@ -49,6 +63,7 @@ struct OverallReport {
     size_t total_log_entries;                       ///< Total number of log entries
     std::vector<ThreadReport> thread_reports;       ///< Per-thread reports
     ThreadReport aggregated_stats;                  ///< Aggregated statistics
+    std::vector<SlowOperation> all_slow_operations; ///< All slow operations across threads
 };
 
 /**
@@ -90,6 +105,11 @@ public:
             report.thread_reports.push_back(thread_report);
             report.total_log_entries += thread_report.message_count;
             
+            // Collect all slow operations
+            for (const auto& slow_op : thread_report.slow_operations) {
+                report.all_slow_operations.push_back(slow_op);
+            }
+            
             // Track earliest and latest times for overall duration
             if (!thread_pair.second.empty()) {
                 auto first_time = thread_pair.second.front().timestamp;
@@ -121,6 +141,7 @@ public:
         printOverallSummary(report);
         printThreadSummaries(report.thread_reports);
         printAggregatedStats(report.aggregated_stats);
+        printSlowOperationsTable(report.all_slow_operations);
         printFooter();
     }
 
@@ -185,6 +206,16 @@ private:
                     if (interval > report.slowest_operation) {
                         report.slowest_operation = interval;
                     }
+                    
+                    // Collect detailed slow operation information
+                    SlowOperation slow_op;
+                    slow_op.timestamp = entries[i-1].timestamp; // When the operation started
+                    slow_op.level = entry.level;
+                    slow_op.thread_id = thread_id;
+                    slow_op.prefix = prefix;
+                    slow_op.full_message = entry.message;
+                    slow_op.duration = interval;
+                    report.slow_operations.push_back(slow_op);
                 }
             }
         }
@@ -382,6 +413,142 @@ private:
         std::cout << "  Slowest Operation: " << aggregated.slowest_operation.count() << " ms\n";
         std::cout << "  Total Outliers: " << aggregated.outlier_count << "\n";
         std::cout << "  Average Message Interval: " << aggregated.avg_message_interval.count() << " ms\n\n";
+    }
+    
+    /**
+     * @brief Print detailed slow operations table
+     * @param slow_operations Vector of slow operations to display
+     */
+    void printSlowOperationsTable(const std::vector<SlowOperation>& slow_operations) {
+        if (slow_operations.empty()) {
+            std::cout << "SLOW OPERATIONS ANALYSIS:\n";
+            std::cout << "  No slow operations detected (threshold: 100ms)\n\n";
+            return;
+        }
+        
+        std::cout << "SLOW OPERATIONS ANALYSIS:\n";
+        std::cout << "  Found " << slow_operations.size() << " slow operations (>100ms duration)\n\n";
+        
+        // Sort by duration (slowest first)
+        auto sorted_ops = slow_operations;
+        std::sort(sorted_ops.begin(), sorted_ops.end(),
+                 [](const SlowOperation& a, const SlowOperation& b) {
+                     return a.duration > b.duration;
+                 });
+        
+        // Print compact summary table first
+        std::cout << "SUMMARY TABLE:\n";
+        std::cout << std::left
+                  << std::setw(20) << "Timestamp"
+                  << std::setw(8) << "Level"
+                  << std::setw(15) << "Thread ID"
+                  << std::setw(12) << "Duration(ms)"
+                  << std::setw(15) << "Prefix"
+                  << "Message (truncated)\n";
+        std::cout << std::string(120, '-') << "\n";
+        
+        // Print each slow operation in compact format
+        for (const auto& op : sorted_ops) {
+            // Format timestamp
+            auto time_t = std::chrono::system_clock::to_time_t(op.timestamp);
+            std::tm* tm_info = std::localtime(&time_t);
+            char timestamp_str[20];
+            std::strftime(timestamp_str, sizeof(timestamp_str), "%H:%M:%S", tm_info);
+            
+            // Get milliseconds part
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                op.timestamp.time_since_epoch()) % 1000;
+            std::string full_timestamp = std::string(timestamp_str) + "." + 
+                                       std::to_string(ms.count()).substr(0, 3);
+            
+            // Format thread ID (truncate if too long)
+            std::string thread_display = op.thread_id;
+            if (thread_display.length() > 12) {
+                thread_display = thread_display.substr(0, 9) + "...";
+            }
+            
+            // Format log level
+            std::string level_str;
+            switch (op.level) {
+                case LogLevel::TRACE: level_str = "TRACE"; break;
+                case LogLevel::DEBUG: level_str = "DEBUG"; break;
+                case LogLevel::INFO: level_str = "INFO"; break;
+                case LogLevel::WARN: level_str = "WARN"; break;
+                case LogLevel::ERROR: level_str = "ERROR"; break;
+                case LogLevel::FATAL: level_str = "FATAL"; break;
+                case LogLevel::OFF: level_str = "OFF"; break;
+            }
+            
+            // Truncate message for summary table
+            std::string display_message = op.full_message;
+            // Remove thread ID prefix from message if present
+            size_t tid_end = display_message.find("] ");
+            if (tid_end != std::string::npos && display_message.find("[tid:") == 0) {
+                display_message = display_message.substr(tid_end + 2);
+            }
+            if (display_message.length() > 50) {
+                display_message = display_message.substr(0, 47) + "...";
+            }
+            
+            std::cout << std::left
+                      << std::setw(20) << full_timestamp
+                      << std::setw(8) << level_str
+                      << std::setw(15) << thread_display
+                      << std::setw(12) << op.duration.count()
+                      << std::setw(15) << op.prefix
+                      << display_message << "\n";
+        }
+        
+        // Print detailed section with full messages
+        std::cout << "\nDETAILED SLOW OPERATIONS (Full Messages):\n";
+        std::cout << std::string(100, '=') << "\n";
+        
+        for (size_t i = 0; i < sorted_ops.size(); ++i) {
+            const auto& op = sorted_ops[i];
+            
+            // Format timestamp
+            auto time_t = std::chrono::system_clock::to_time_t(op.timestamp);
+            std::tm* tm_info = std::localtime(&time_t);
+            char timestamp_str[20];
+            std::strftime(timestamp_str, sizeof(timestamp_str), "%H:%M:%S", tm_info);
+            
+            // Get milliseconds part
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                op.timestamp.time_since_epoch()) % 1000;
+            std::string full_timestamp = std::string(timestamp_str) + "." + 
+                                       std::to_string(ms.count()).substr(0, 3);
+            
+            // Format log level
+            std::string level_str;
+            switch (op.level) {
+                case LogLevel::TRACE: level_str = "TRACE"; break;
+                case LogLevel::DEBUG: level_str = "DEBUG"; break;
+                case LogLevel::INFO: level_str = "INFO"; break;
+                case LogLevel::WARN: level_str = "WARN"; break;
+                case LogLevel::ERROR: level_str = "ERROR"; break;
+                case LogLevel::FATAL: level_str = "FATAL"; break;
+                case LogLevel::OFF: level_str = "OFF"; break;
+            }
+            
+            // Remove thread ID prefix from message if present
+            std::string clean_message = op.full_message;
+            size_t tid_end = clean_message.find("] ");
+            if (tid_end != std::string::npos && clean_message.find("[tid:") == 0) {
+                clean_message = clean_message.substr(tid_end + 2);
+            }
+            
+            std::cout << "[" << (i + 1) << "] Duration: " << op.duration.count() << "ms | "
+                      << "Time: " << full_timestamp << " | "
+                      << "Level: " << level_str << " | "
+                      << "Thread: " << op.thread_id << "\n";
+            std::cout << "    Prefix: " << op.prefix << "\n";
+            std::cout << "    Full Message: " << clean_message << "\n";
+            
+            if (i < sorted_ops.size() - 1) {
+                std::cout << std::string(100, '-') << "\n";
+            }
+        }
+        std::cout << std::string(100, '=') << "\n\n";
     }
     
     /**
