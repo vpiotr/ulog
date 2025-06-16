@@ -168,6 +168,11 @@ add_executable(demo_observer_benchmark_no_mutex
 target_link_libraries(demo_observer_benchmark_no_mutex ulog)
 target_include_directories(demo_observer_benchmark_no_mutex PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks)
 
+add_executable(demo_message_supplier
+    demos/demo_message_supplier.cpp
+)
+target_link_libraries(demo_message_supplier ulog)
+
 
 # Add tests to CTest
 add_test(NAME test_logger COMMAND test_logger)

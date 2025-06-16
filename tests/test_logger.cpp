@@ -619,6 +619,175 @@ UTEST_FUNC_DEF2(Logger, CleanMessageUtf8Option) {
     logger_no_utf8.disable_buffer();
 }
 
+UTEST_FUNC_DEF2(Logger, MessageSupplier) {
+    ConsoleCapture capture;
+    
+    auto& logger = ulog::getLogger("SupplierTest");
+    
+    // Test basic supplier functionality
+    bool supplier_called = false;
+    auto basic_supplier = [&supplier_called]() {
+        supplier_called = true;
+        return std::string("Supplier message");
+    };
+    
+    // Test with INFO level (should log)
+    logger.set_log_level(ulog::LogLevel::INFO);
+    supplier_called = false;
+    logger.info_supplier(basic_supplier);
+    
+    UTEST_ASSERT_TRUE(supplier_called);
+    
+    std::string output = capture.get();
+    UTEST_ASSERT_NOT_EQUALS(output.find("Supplier message"), std::string::npos);
+    capture.clear();
+    
+    // Test with ERROR level (should not log INFO)
+    logger.set_log_level(ulog::LogLevel::ERROR);
+    supplier_called = false;
+    logger.info_supplier(basic_supplier);
+    
+    UTEST_ASSERT_FALSE(supplier_called);
+    
+    output = capture.get();
+    UTEST_ASSERT_EQUALS(output.find("Supplier message"), std::string::npos);
+}
+
+UTEST_FUNC_DEF2(Logger, MessageSupplierWithFormatting) {
+    ConsoleCapture capture;
+    
+    auto& logger = ulog::getLogger("SupplierFormatTest");
+    logger.set_log_level(ulog::LogLevel::DEBUG);
+    
+    // Test supplier with parameter formatting where calculations are inside supplier
+    int calculation_count = 0;
+    
+    auto expensive_calc = [&calculation_count]() {
+        calculation_count += 10; // Simulates expensive operation
+        return 42;
+    };
+    
+    // Supplier that performs expensive calculation and returns format string + parameters
+    auto format_supplier_with_calc = [&calculation_count, &expensive_calc](int iteration) {
+        calculation_count++; // Count supplier calls
+        int result = expensive_calc();
+        // Return format string, supplier will be called with iteration parameter
+        return std::string("Calculation result: " + std::to_string(result) + ", iteration: " + std::to_string(iteration));
+    };
+    
+    // Test with DEBUG level (should log and call expensive calculation)
+    calculation_count = 0;
+    logger.debug_supplier([&]() { return format_supplier_with_calc(1); });
+    
+    UTEST_ASSERT_EQUALS(calculation_count, 11); // 1 for supplier + 10 for calculation
+    
+    std::string output = capture.get();
+    UTEST_ASSERT_NOT_EQUALS(output.find("Calculation result: 42"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(output.find("iteration: 1"), std::string::npos);
+    capture.clear();
+    
+    // Test with ERROR level (should not log DEBUG, no calculations performed)
+    logger.set_log_level(ulog::LogLevel::ERROR);
+    calculation_count = 0;
+    logger.debug_supplier([&]() { return format_supplier_with_calc(2); });
+    
+    // Neither supplier nor expensive calculation should be called
+    UTEST_ASSERT_EQUALS(calculation_count, 0);
+    
+    output = capture.get();
+    UTEST_ASSERT_EQUALS(output.find("Calculation result"), std::string::npos);
+}
+
+UTEST_FUNC_DEF2(Logger, MessageSupplierZeroCost) {
+    ConsoleCapture capture;
+    
+    auto& logger = ulog::getLogger("ZeroCostTest");
+    
+    // Test zero-cost abstraction - supplier should not be called when logging is disabled
+    int expensive_operation_count = 0;
+    
+    auto expensive_supplier = [&expensive_operation_count]() {
+        // Simulate very expensive operation
+        expensive_operation_count++;
+        std::ostringstream oss;
+        for (int i = 0; i < 1000; ++i) {
+            oss << "expensive_calculation_" << i << "_";
+        }
+        return oss.str();
+    };
+    
+    // Set log level to OFF - no logging should occur
+    logger.set_log_level(ulog::LogLevel::OFF);
+    
+    // Test all levels - none should invoke the supplier
+    logger.trace_supplier(expensive_supplier);
+    logger.debug_supplier(expensive_supplier);
+    logger.info_supplier(expensive_supplier);
+    logger.warn_supplier(expensive_supplier);
+    logger.error_supplier(expensive_supplier);
+    logger.fatal_supplier(expensive_supplier);
+    
+    UTEST_ASSERT_EQUALS(expensive_operation_count, 0);
+    
+    std::string output = capture.get();
+    UTEST_ASSERT_TRUE(output.empty());
+    
+    // Now enable logging and verify supplier is called
+    logger.set_log_level(ulog::LogLevel::TRACE);
+    logger.info_supplier(expensive_supplier);
+    
+    UTEST_ASSERT_EQUALS(expensive_operation_count, 1);
+    
+    output = capture.get();
+    UTEST_ASSERT_NOT_EQUALS(output.find("expensive_calculation_0_"), std::string::npos);
+}
+
+UTEST_FUNC_DEF2(Logger, MessageSupplierFormattedParameters) {
+    ConsoleCapture capture;
+    
+    auto& logger = ulog::getLogger("SupplierFormattedTest");
+    logger.set_log_level(ulog::LogLevel::INFO);
+    
+    int expensive_operation_count = 0;
+    
+    // Test formatted supplier where calculations are done inside
+    auto expensive_formatted_supplier = [&expensive_operation_count]() {
+        expensive_operation_count++;
+        
+        // Simulate expensive calculations that should only happen when logging
+        int prime = 97;  // Simulate expensive prime calculation
+        int fibonacci = 89; // Simulate expensive fibonacci calculation
+        int total = prime + fibonacci;
+        
+        // Return pre-formatted string to avoid parameter evaluation issues
+        return "Prime: " + std::to_string(prime) + 
+               ", Fibonacci: " + std::to_string(fibonacci) + 
+               ", Total: " + std::to_string(total);
+    };
+    
+    // Test with INFO level (should call supplier and do calculations)
+    expensive_operation_count = 0;
+    logger.info_supplier(expensive_formatted_supplier);
+    
+    UTEST_ASSERT_EQUALS(expensive_operation_count, 1);
+    
+    std::string output = capture.get();
+    UTEST_ASSERT_NOT_EQUALS(output.find("Prime: 97"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(output.find("Fibonacci: 89"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(output.find("Total: 186"), std::string::npos);
+    capture.clear();
+    
+    // Test with ERROR level (should not call supplier)
+    logger.set_log_level(ulog::LogLevel::ERROR);
+    expensive_operation_count = 0;
+    logger.info_supplier(expensive_formatted_supplier);
+    
+    UTEST_ASSERT_EQUALS(expensive_operation_count, 0); // Should not be called
+    
+    output = capture.get();
+    UTEST_ASSERT_TRUE(output.empty()); // No output should be generated
+}
+
 void test_logger_register(bool& errorFound) {
     UTEST_FUNC2(Logger, BasicLogging);
     UTEST_FUNC2(Logger, LogLevels);
@@ -637,6 +806,10 @@ void test_logger_register(bool& errorFound) {
     UTEST_FUNC2(Logger, CleanMessageAllControlChars);
     UTEST_FUNC2(Logger, CleanMessageWithObserver);
     UTEST_FUNC2(Logger, CleanMessageUtf8Option);
+    UTEST_FUNC2(Logger, MessageSupplier);
+    UTEST_FUNC2(Logger, MessageSupplierWithFormatting);
+    UTEST_FUNC2(Logger, MessageSupplierZeroCost);
+    UTEST_FUNC2(Logger, MessageSupplierFormattedParameters);
 }
 
 int main() {

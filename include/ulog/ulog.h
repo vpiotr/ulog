@@ -17,6 +17,7 @@
  * - Thread-safe logger registry
  * - Observer pattern for log entry handling
  * - Flexible message formatting with anonymous and positional parameters
+ * - Message suppliers with zero-cost abstraction for expensive calculations
  * - RAII-based resource management
  * - Optional mutex configuration for performance tuning
  * 
@@ -32,6 +33,11 @@
  * // Get named logger
  * auto namedLogger = ulog::getLogger("MyApp");
  * namedLogger.debug("Debug message: {0}", value);
+ * 
+ * // Message suppliers (zero-cost when logging disabled)
+ * namedLogger.debug_supplier([]() {
+ *     return "Expensive calculation: " + std::to_string(expensive_operation());
+ * });
  * 
  * // Enable memory buffer
  * logger.enable_buffer(100);
@@ -431,6 +437,138 @@ public:
     }
     
     /**
+     * @brief Log trace message using supplier (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a string message
+     * @param supplier Function/lambda that produces the message when called
+     */
+    template<typename Supplier>
+    void trace_supplier(Supplier&& supplier) {
+        log_supplier(LogLevel::TRACE, std::forward<Supplier>(supplier));
+    }
+    
+    /**
+     * @brief Log debug message using supplier (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a string message
+     * @param supplier Function/lambda that produces the message when called
+     */
+    template<typename Supplier>
+    void debug_supplier(Supplier&& supplier) {
+        log_supplier(LogLevel::DEBUG, std::forward<Supplier>(supplier));
+    }
+    
+    /**
+     * @brief Log info message using supplier (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a string message
+     * @param supplier Function/lambda that produces the message when called
+     */
+    template<typename Supplier>
+    void info_supplier(Supplier&& supplier) {
+        log_supplier(LogLevel::INFO, std::forward<Supplier>(supplier));
+    }
+    
+    /**
+     * @brief Log warning message using supplier (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a string message
+     * @param supplier Function/lambda that produces the message when called
+     */
+    template<typename Supplier>
+    void warn_supplier(Supplier&& supplier) {
+        log_supplier(LogLevel::WARN, std::forward<Supplier>(supplier));
+    }
+    
+    /**
+     * @brief Log error message using supplier (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a string message
+     * @param supplier Function/lambda that produces the message when called
+     */
+    template<typename Supplier>
+    void error_supplier(Supplier&& supplier) {
+        log_supplier(LogLevel::ERROR, std::forward<Supplier>(supplier));
+    }
+    
+    /**
+     * @brief Log fatal message using supplier (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a string message
+     * @param supplier Function/lambda that produces the message when called
+     */
+    template<typename Supplier>
+    void fatal_supplier(Supplier&& supplier) {
+        log_supplier(LogLevel::FATAL, std::forward<Supplier>(supplier));
+    }
+    
+    /**
+     * @brief Log trace message using supplier with parameter formatting (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a format string
+     * @tparam Args Parameter types for formatting
+     * @param supplier Function/lambda that produces the format string when called
+     * @param args Arguments for format string
+     */
+    template<typename Supplier, typename... Args>
+    void trace_supplier(Supplier&& supplier, Args&&... args) {
+        log_supplier_formatted(LogLevel::TRACE, std::forward<Supplier>(supplier), std::forward<Args>(args)...);
+    }
+    
+    /**
+     * @brief Log debug message using supplier with parameter formatting (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a format string
+     * @tparam Args Parameter types for formatting
+     * @param supplier Function/lambda that produces the format string when called
+     * @param args Arguments for format string
+     */
+    template<typename Supplier, typename... Args>
+    void debug_supplier(Supplier&& supplier, Args&&... args) {
+        log_supplier_formatted(LogLevel::DEBUG, std::forward<Supplier>(supplier), std::forward<Args>(args)...);
+    }
+    
+    /**
+     * @brief Log info message using supplier with parameter formatting (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a format string
+     * @tparam Args Parameter types for formatting
+     * @param supplier Function/lambda that produces the format string when called
+     * @param args Arguments for format string
+     */
+    template<typename Supplier, typename... Args>
+    void info_supplier(Supplier&& supplier, Args&&... args) {
+        log_supplier_formatted(LogLevel::INFO, std::forward<Supplier>(supplier), std::forward<Args>(args)...);
+    }
+    
+    /**
+     * @brief Log warning message using supplier with parameter formatting (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a format string
+     * @tparam Args Parameter types for formatting
+     * @param supplier Function/lambda that produces the format string when called
+     * @param args Arguments for format string
+     */
+    template<typename Supplier, typename... Args>
+    void warn_supplier(Supplier&& supplier, Args&&... args) {
+        log_supplier_formatted(LogLevel::WARN, std::forward<Supplier>(supplier), std::forward<Args>(args)...);
+    }
+    
+    /**
+     * @brief Log error message using supplier with parameter formatting (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a format string
+     * @tparam Args Parameter types for formatting
+     * @param supplier Function/lambda that produces the format string when called
+     * @param args Arguments for format string
+     */
+    template<typename Supplier, typename... Args>
+    void error_supplier(Supplier&& supplier, Args&&... args) {
+        log_supplier_formatted(LogLevel::ERROR, std::forward<Supplier>(supplier), std::forward<Args>(args)...);
+    }
+    
+    /**
+     * @brief Log fatal message using supplier with parameter formatting (only invoked if log level allows)
+     * @tparam Supplier Callable type that returns a format string
+     * @tparam Args Parameter types for formatting
+     * @param supplier Function/lambda that produces the format string when called
+     * @param args Arguments for format string
+     */
+    template<typename Supplier, typename... Args>
+    void fatal_supplier(Supplier&& supplier, Args&&... args) {
+        log_supplier_formatted(LogLevel::FATAL, std::forward<Supplier>(supplier), std::forward<Args>(args)...);
+    }
+    
+    /**
      * @brief Enable memory buffer
      * @param capacity Maximum number of entries (0 = unlimited)
      */
@@ -723,6 +861,93 @@ private:
         }
     }
     
+    template<typename Supplier>
+    void log_supplier(LogLevel level, Supplier&& supplier) {
+        // Check if logging is enabled for this level BEFORE invoking supplier
+        LogLevel current_level = log_level_;
+        if (current_level == LogLevel::OFF || level < current_level) {
+            return; // Early return - supplier is never invoked
+        }
+        
+        // Only invoke supplier if we passed the level check
+        auto message = supplier();
+        
+        // Apply message cleaning if enabled
+        if (clean_message_) {
+            message = clean_message(message, utf8_handling_);
+        }
+        
+        auto entry = LogEntry(std::chrono::system_clock::now(), level, name_, message);
+        
+        // Console output with optional mutex
+        if (console_enabled_) {
+#if ULOG_USE_MUTEX_FOR_CONSOLE
+            std::lock_guard<std::mutex> console_lock(console_mutex_);
+#endif
+            std::cout << entry.formatted_message() << "\n";
+        }
+        
+        // Buffer operations with optional mutex
+        if (buffer_enabled_ && buffer_) {
+#if ULOG_USE_MUTEX_FOR_BUFFER
+            std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
+#endif
+            buffer_->add(entry);
+        }
+        
+        // Observer notifications with optional mutex
+        {
+#if ULOG_USE_MUTEX_FOR_OBSERVERS
+            std::lock_guard<std::mutex> observers_lock(observers_mutex_);
+#endif
+            notify_observers_message(entry);
+        }
+    }
+
+    template<typename Supplier, typename... Args>
+    void log_supplier_formatted(LogLevel level, Supplier&& supplier, Args&&... args) {
+        // Check if logging is enabled for this level BEFORE invoking supplier
+        LogLevel current_level = log_level_;
+        if (current_level == LogLevel::OFF || level < current_level) {
+            return; // Early return - supplier is never invoked
+        }
+        
+        // Only invoke supplier if we passed the level check
+        auto format = supplier();
+        auto message = MessageFormatter::format(format, std::forward<Args>(args)...);
+        
+        // Apply message cleaning if enabled
+        if (clean_message_) {
+            message = clean_message(message, utf8_handling_);
+        }
+        
+        auto entry = LogEntry(std::chrono::system_clock::now(), level, name_, message);
+        
+        // Console output with optional mutex
+        if (console_enabled_) {
+#if ULOG_USE_MUTEX_FOR_CONSOLE
+            std::lock_guard<std::mutex> console_lock(console_mutex_);
+#endif
+            std::cout << entry.formatted_message() << "\n";
+        }
+        
+        // Buffer operations with optional mutex
+        if (buffer_enabled_ && buffer_) {
+#if ULOG_USE_MUTEX_FOR_BUFFER
+            std::lock_guard<std::mutex> buffer_lock(buffer_mutex_);
+#endif
+            buffer_->add(entry);
+        }
+        
+        // Observer notifications with optional mutex
+        {
+#if ULOG_USE_MUTEX_FOR_OBSERVERS
+            std::lock_guard<std::mutex> observers_lock(observers_mutex_);
+#endif
+            notify_observers_message(entry);
+        }
+    }
+
     void notify_observers_message(const LogEntry& entry) {
         for (auto& observer : observers_) {
             observer->handleNewMessage(entry);

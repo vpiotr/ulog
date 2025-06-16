@@ -13,6 +13,7 @@ A fast, simple, and lightweight header-only C++ logging library with console out
 - **Fast & Lightweight**: <1000 LOC, optimized for speed and simplicity
 - **Thread-safe**: All operations are thread-safe
 - **Log level filtering**: Built-in filtering by severity level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF)
+- **Message suppliers**: Zero-cost abstraction for expensive log message calculations - suppliers only invoked when log level allows
 - **Flexible formatting**: Support for anonymous (`{?}`) and positional (`{0}`, `{1}`) parameters
 - **Memory buffer**: Optional in-memory log storage with configurable capacity
 - **Observer pattern**: Extensible through custom log observers
@@ -184,6 +185,68 @@ Available log levels (in order of severity):
 - `ERROR` - Errors
 - `FATAL` - Fatal errors
 
+### Message Suppliers (Zero-Cost Abstraction)
+
+Message suppliers provide a zero-cost abstraction for expensive log message calculations. The supplier function is only invoked if the log level allows the message to be logged, providing significant performance benefits for debug/trace logging in production environments.
+
+```cpp
+auto logger = ulog::getLogger("PerformanceApp");
+
+// Traditional logging - always evaluates expensive operations even when logging is disabled
+logger.set_log_level(ulog::LogLevel::WARN); // Disable debug
+logger.debug("Result: {}", expensive_calculation()); // expensive_calculation() is ALWAYS called!
+
+// Message supplier - only evaluates when log level allows
+logger.debug_supplier([]() {
+    // This lambda is ONLY called when DEBUG level is enabled
+    return "Result: " + std::to_string(expensive_calculation());
+});
+
+// Suppliers work with all log levels
+logger.trace_supplier([]() { return "Trace: " + complex_operation(); });
+logger.info_supplier([]() { return "Info: " + another_operation(); });
+logger.error_supplier([]() { return "Error: " + error_details(); });
+```
+
+#### Performance Comparison Example
+
+```cpp
+#include <chrono>
+
+auto logger = ulog::getLogger("Benchmark");
+logger.set_log_level(ulog::LogLevel::WARN); // Disable debug logging
+
+// Traditional approach - slow even when logging disabled
+auto start = std::chrono::high_resolution_clock::now();
+for (int i = 0; i < 1000; ++i) {
+    logger.debug("Fibonacci(20) = {}", fibonacci(20)); // Always calculates!
+}
+auto traditional_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+    std::chrono::high_resolution_clock::now() - start);
+
+// Supplier approach - zero cost when logging disabled  
+start = std::chrono::high_resolution_clock::now();
+for (int i = 0; i < 1000; ++i) {
+    logger.debug_supplier([]() {
+        return "Fibonacci(20) = " + std::to_string(fibonacci(20)); // Never called!
+    });
+}
+auto supplier_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+    std::chrono::high_resolution_clock::now() - start);
+
+// supplier_time will be ~0ms, traditional_time will be hundreds of milliseconds
+std::cout << "Traditional: " << traditional_time.count() << "ms\n";
+std::cout << "Supplier: " << supplier_time.count() << "ms\n";
+```
+
+#### Key Benefits
+
+- **Zero-cost when disabled**: Supplier functions are never called when log level prevents logging
+- **Full parameter support**: Suppliers can calculate and format complex parameters internally
+- **Lambda-friendly**: Works seamlessly with C++ lambdas and capture lists
+- **Thread-safe**: Inherits all thread safety guarantees from the logging system
+- **Easy migration**: Existing logging calls can be gradually converted to suppliers
+
 ## Installation
 
 ### Method 1: Header-only
@@ -329,7 +392,13 @@ make
 
 Main logging class with the following methods:
 
+**Standard Logging Methods:**
 - `trace()`, `debug()`, `info()`, `warn()`, `error()`, `fatal()` - Log messages at different levels
+
+**Message Supplier Methods (Zero-Cost Abstraction):**
+- `trace_supplier()`, `debug_supplier()`, `info_supplier()`, `warn_supplier()`, `error_supplier()`, `fatal_supplier()` - Log using supplier functions that are only invoked when log level allows
+
+**Configuration Methods:**
 - `set_log_level(LogLevel level)` - Set minimum log level filter
 - `get_log_level()` - Get current log level filter
 - `enable_buffer(size_t capacity)` - Enable memory buffer with optional capacity limit
@@ -337,6 +406,8 @@ Main logging class with the following methods:
 - `clear_buffer()` - Clear buffer contents
 - `enable_console()` / `disable_console()` - Control console output
 - `flush()` - Flush console output
+
+**Observer Management:**
 - `add_observer()` / `remove_observer()` - Manage observers
 - `buffer()` - Get read-only access to buffer
 

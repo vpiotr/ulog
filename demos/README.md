@@ -438,6 +438,64 @@ This demo showcases the BufferAssertions extension, which provides a rich set of
 - **Debugging Tools**: Interactive log content analysis and validation
 - **Quality Assurance**: Systematic logging behavior verification
 
+### 11. demo_message_supplier.cpp
+**Message Supplier Demo** - Demonstrates zero-cost abstraction for expensive log message calculations.
+
+This demo showcases the message supplier feature, which provides significant performance benefits by only evaluating expensive calculations when the log level allows the message to be logged:
+
+#### Features:
+- **Zero-Cost Abstraction**: Supplier functions only invoked when log level allows logging
+- **Performance Comparison**: Direct comparison between traditional and supplier-based logging
+- **Real-World Examples**: Demonstrates with actual expensive operations (Fibonacci, mathematical calculations)
+- **Lambda Integration**: Seamless integration with C++ lambda expressions and capture lists
+- **Complex Calculations**: Shows how to encapsulate multiple expensive operations in suppliers
+
+#### Demo Scenarios:
+
+1. **Traditional vs Supplier Performance**
+   - Traditional logging with disabled debug level (always evaluates expensive functions)
+   - Supplier logging with disabled debug level (zero evaluation cost)
+   - Performance measurement and comparison
+
+2. **Expensive Operation Examples**
+   - Fibonacci calculations with artificial delays
+   - Complex mathematical computations
+   - Multiple expensive operations combined
+
+3. **Real-World Usage Patterns**
+   - Debug tracing with complex state calculations
+   - Performance-critical code with detailed logging
+   - Production environments with disabled debug logging
+
+#### Key Performance Benefits:
+- **Traditional Approach**: Expensive operations always executed, even when logging disabled
+- **Supplier Approach**: Zero cost when logging disabled - suppliers never called
+- **Dramatic Speedup**: Demo shows ~infinite speedup (568ms vs 0ms) when logging disabled
+- **Production Ready**: Safe to use expensive debug logging in production code
+
+#### Code Examples:
+
+**Traditional logging (slow when disabled):**
+```cpp
+logger.set_log_level(ulog::LogLevel::WARN); // Disable debug
+logger.debug("Result: {}", expensive_calculation()); // Still calls expensive_calculation()!
+```
+
+**Supplier logging (zero-cost when disabled):**
+```cpp
+logger.set_log_level(ulog::LogLevel::WARN); // Disable debug
+logger.debug_supplier([]() {
+    // This lambda is NEVER called when debug is disabled
+    return "Result: " + std::to_string(expensive_calculation());
+});
+```
+
+#### Use Cases:
+- **Debug Tracing**: Complex state dumps and calculations for debugging
+- **Performance Monitoring**: Expensive metrics calculation only when needed
+- **Development vs Production**: Rich debug info in dev, zero cost in production
+- **Conditional Logging**: Complex formatting logic executed conditionally
+
 ## Building and Running
 
 ### Build the demos:
@@ -453,6 +511,7 @@ make demo_debug_scope           # For the debug scope RAII demo
 make demo_cerr_observer         # For the cerr observer demo
 make demo_exception_formatting  # For the exception formatting demo
 make demo_buffer_assertions     # For the buffer assertions extension demo
+make demo_message_supplier      # For the message supplier demo
 make ulog_demo                  # For the main demo
 ```
 
@@ -484,6 +543,9 @@ make ulog_demo                  # For the main demo
 
 # Run the buffer assertions extension demo
 ./demo_buffer_assertions
+
+# Run the message supplier demo
+./demo_message_supplier
 
 # Run the main demo
 ./ulog_demo
