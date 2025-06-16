@@ -133,6 +133,17 @@ target_include_directories(demo_buffer_stats PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/demos/extensions/include
 )
 
+add_executable(demo_threaded_buffer_stats
+    demos/demo_threaded_buffer_stats.cpp
+)
+target_link_libraries(demo_threaded_buffer_stats ulog)
+# Add the demos directories to the include path for demo_threaded_buffer_stats
+# so it can find extension headers and helpers
+target_include_directories(demo_threaded_buffer_stats PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/demos/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/demos/extensions/include
+)
+
 add_executable(demo_buffer_benchmark_no_mutex
     benchmarks/demo_buffer_benchmark_no_mutex.cpp
 )
