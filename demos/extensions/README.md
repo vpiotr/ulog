@@ -2,6 +2,85 @@
 
 This directory contains reusable extensions for the ulog library that can be used in your own projects.
 
+## Debug Scope Extension
+
+**File:** `include/debug_scope.h`
+
+The Debug Scope extension provides RAII-based automatic scope entry/exit logging functionality. It includes both a `DebugScope` class for automatic logging and a `DebugObserver` class for capturing and monitoring scope traversal.
+
+### Features
+
+- **RAII Scope Logging**: Automatic "Entering:" and "Exiting:" messages
+- **Exception Safety**: Exit messages logged even when exceptions occur
+- **Scope Tracking**: Observer to capture and monitor scope messages
+- **Nested Scope Support**: Works seamlessly with nested function calls
+- **Multi-Logger Support**: Each scope can use different loggers
+- **Non-copyable Design**: Ensures proper RAII semantics
+
+### Usage Example
+
+```cpp
+#include "ulog/ulog.h"
+#include "extensions/include/debug_scope.h"
+
+using ulog::extensions::DebugScope;
+using ulog::extensions::DebugObserver;
+
+auto& logger = ulog::getLogger("demo");
+logger.set_log_level(ulog::LogLevel::DEBUG);
+
+auto observer = std::make_shared<DebugObserver>("ScopeTracker");
+
+{
+    ulog::ObserverScope observerScope(logger, observer);
+    
+    {
+        DebugScope scope(logger, "main_function");
+        logger.info("Doing work in main function");
+        
+        {
+            DebugScope innerScope(logger, "inner_function");
+            logger.debug("Processing data");
+        } // Automatically logs "Exiting: inner_function"
+        
+    } // Automatically logs "Exiting: main_function"
+}
+
+observer->printCapturedMessages();
+```
+
+### DebugScope Class
+
+The `DebugScope` class provides automatic scope entry/exit logging:
+
+| Method | Description |
+|--------|-------------|
+| `DebugScope(logger, scope_name)` | Constructor - logs entering message |
+| `~DebugScope()` | Destructor - logs exiting message |
+| `getScopeName()` | Get the scope name/label |
+| `getLogger()` | Get reference to the logger |
+
+### DebugObserver Class
+
+The `DebugObserver` class captures and tracks debug scope messages:
+
+| Method | Description |
+|--------|-------------|
+| `DebugObserver(name)` | Constructor with observer name |
+| `getMessageCount()` | Get number of captured messages |
+| `getCapturedMessages()` | Get all captured message strings |
+| `printCapturedMessages()` | Print captured messages to console |
+| `clearCapturedMessages()` | Clear all captured messages |
+| `getName()` | Get observer name/identifier |
+
+### Key Benefits
+
+- **Automatic Cleanup**: RAII ensures exit messages even with exceptions
+- **Zero Overhead**: No performance impact when debug level is disabled
+- **Nested Support**: Handles complex call hierarchies naturally
+- **Monitoring Capability**: Track program flow with observer pattern
+- **Simple Integration**: Just wrap code blocks with DebugScope
+
 ## Buffer Assertions Extension
 
 **File:** `include/buffer_assertions.h`

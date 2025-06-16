@@ -2,92 +2,19 @@
  * @file demo_debug_scope.cpp
  * @brief Demonstration of DebugScope RAII functionality with observer pattern
  * 
- * This demo showcases a DebugScope class that automatically logs "Entering: x" 
+ * This demo showcases the DebugScope extension that automatically logs "Entering: x" 
  * and "Exiting: x" messages for labeled scopes using RAII pattern combined
  * with observer management.
  */
 
 #include "ulog/ulog.h"
+#include "extensions/include/debug_scope.h"
 #include <iostream>
 #include <memory>
 #include <string>
 
-/**
- * @brief Debug observer that specifically tracks debug scope entries
- */
-class DebugObserver : public ulog::LogObserver {
-public:
-    explicit DebugObserver(const std::string& name) : name_(name) {}
-    
-    void handleNewMessage(const ulog::LogEntry& entry) override {
-        // Track all debug scope related messages
-        if (entry.message.find("Entering:") != std::string::npos ||
-            entry.message.find("Exiting:") != std::string::npos) {
-            scope_messages_.push_back(entry.message);
-            std::cout << "[" << name_ << "] Captured: " << entry.formatted_message() << std::endl;
-        }
-    }
-    
-    void handleRegistered(const std::string& logger_name) override {
-        std::cout << "[" << name_ << "] Observer registered for logger: " << logger_name << std::endl;
-    }
-    
-    void handleUnregistered(const std::string& logger_name) override {
-        std::cout << "[" << name_ << "] Observer unregistered from logger: " << logger_name << std::endl;
-    }
-    
-    void printCapturedMessages() const {
-        std::cout << "[" << name_ << "] Captured " << scope_messages_.size() << " scope messages:" << std::endl;
-        for (const auto& msg : scope_messages_) {
-            std::cout << "  - " << msg << std::endl;
-        }
-    }
-    
-    size_t getMessageCount() const { return scope_messages_.size(); }
-    
-private:
-    std::string name_;
-    std::vector<std::string> scope_messages_;
-};
-
-/**
- * @brief RAII debug scope that logs entering and exiting messages
- */
-class DebugScope {
-public:
-    /**
-     * @brief Constructor - logs entering message and sets up observer
-     * @param logger Logger to use for debug messages
-     * @param scope_name Name/label of the scope
-     */
-    DebugScope(ulog::Logger& logger, const std::string& scope_name)
-        : logger_(logger), scope_name_(scope_name) {
-        logger_.debug("Entering: {0}", scope_name_);
-    }
-    
-    /**
-     * @brief Destructor - logs exiting message
-     */
-    ~DebugScope() {
-        logger_.debug("Exiting: {0}", scope_name_);
-    }
-    
-    // Non-copyable, non-movable
-    DebugScope(const DebugScope&) = delete;
-    DebugScope& operator=(const DebugScope&) = delete;
-    DebugScope(DebugScope&&) = delete;
-    DebugScope& operator=(DebugScope&&) = delete;
-    
-    /**
-     * @brief Get the scope name
-     * @return Scope name
-     */
-    const std::string& getScopeName() const { return scope_name_; }
-
-private:
-    ulog::Logger& logger_;
-    std::string scope_name_;
-};
+using ulog::extensions::DebugObserver;
+using ulog::extensions::DebugScope;
 
 /**
  * @brief Demo function showing basic DebugScope usage
