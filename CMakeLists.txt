@@ -13,13 +13,9 @@ if(MSVC)
     add_compile_options(/W4)
     # Ensure proper UTF-8 handling in runtime
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-    # Enable UTF-8 console support for ulog on Windows
-    add_compile_definitions(ULOG_ENABLE_UTF8_CONSOLE)
 elseif(WIN32)
     # For other Windows compilers (MinGW, Clang, etc.)
     add_compile_options(-Wall -Wextra -Wpedantic)
-    # Enable UTF-8 console support for ulog on Windows
-    add_compile_definitions(ULOG_ENABLE_UTF8_CONSOLE)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -31,11 +27,6 @@ function(configure_utf8_target target_name)
         target_compile_options(${target_name} PRIVATE /utf-8)
         # Add UTF-8 BOM handling for Visual Studio
         target_compile_definitions(${target_name} PRIVATE UNICODE _UNICODE)
-        # Enable UTF-8 console support for ulog
-        target_compile_definitions(${target_name} PRIVATE ULOG_ENABLE_UTF8_CONSOLE)
-    elseif(WIN32)
-        # For other Windows compilers
-        target_compile_definitions(${target_name} PRIVATE ULOG_ENABLE_UTF8_CONSOLE)
     endif()
 endfunction()
 

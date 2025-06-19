@@ -20,14 +20,6 @@
  * - Message suppliers with zero-cost abstraction for expensive calculations
  * - RAII-based resource management
  * - Optional mutex configuration for performance tuning
- * - Optional UTF-8 console support for Windows (define ULOG_ENABLE_UTF8_CONSOLE)
- * 
- * @section configuration_sec Configuration Macros
- * 
- * - ULOG_ENABLE_UTF8_CONSOLE: Enable UTF-8 console support on Windows.
- *   When defined, includes Windows headers and automatically initializes
- *   UTF-8 console output. Note: This may conflict with other libraries
- *   that define ERROR, TRACE, or DEBUG macros.
  * 
  * @section usage_sec Basic Usage
  * 
@@ -68,19 +60,6 @@
 #include <iomanip>
 #include <ctime>
 #include <type_traits>
-
-// Undefine common Windows macros that can conflict with our enums
-#if defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
-#ifdef ERROR
-#undef ERROR
-#endif
-#ifdef TRACE
-#undef TRACE
-#endif
-#ifdef DEBUG
-#undef DEBUG
-#endif
-#endif // defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
 
 #ifdef ULOG_USE_USTR
 #include "ustr/ustr.h" // Assuming ustr.h is in an include path accessible as "ustr/ustr.h"
@@ -390,10 +369,6 @@ public:
      */
     explicit Logger(const std::string& name = "") 
         : name_(name), console_enabled_(true), buffer_enabled_(false), log_level_(LogLevel::INFO), clean_message_(true), utf8_handling_(DEFAULT_STR_IS_UTF8) {
-#if defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
-        // Ensure UTF-8 console is initialized on Windows (optional feature)
-        details::initialize_utf8_console();
-#endif
     }
     
     /**
@@ -1136,50 +1111,5 @@ inline Logger& getLogger(const std::string& name) {
 }
 
 } // namespace ulog
-
-// Windows UTF-8 console support
-#if defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
-#include <windows.h>
-#include <io.h>
-#include <fcntl.h>
-
-// Undefine conflicting Windows macros
-#ifdef ERROR
-#undef ERROR
-#endif
-#ifdef TRACE
-#undef TRACE
-#endif
-#ifdef DEBUG
-#undef DEBUG
-#endif
-
-namespace ulog {
-namespace details {
-    /**
-     * @brief Initialize UTF-8 console output on Windows
-     * @return true if initialization was successful
-     */
-    inline bool initialize_utf8_console() {
-        static bool initialized = false;
-        if (!initialized) {
-            // Set console output code page to UTF-8
-            SetConsoleOutputCP(CP_UTF8);
-            SetConsoleCP(CP_UTF8);
-            
-            // For better UTF-8 support in console applications
-            // Note: We avoid _setmode as it can interfere with other output
-            // The /utf-8 compiler flag ensures proper source encoding
-            
-            initialized = true;
-        }
-        return true;
-    }
-    
-    // Ensure UTF-8 console is initialized
-    static bool utf8_console_init = initialize_utf8_console();
-} // namespace details
-} // namespace ulog
-#endif // defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
 
 #endif // ULOG_ULOG_H

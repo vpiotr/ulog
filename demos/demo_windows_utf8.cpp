@@ -13,14 +13,55 @@
 
 // Enable UTF-8 console support on Windows
 // To test without UTF-8 console initialization, comment out the line below:
-#define ULOG_ENABLE_UTF8_CONSOLE
+// #define ULOG_ENABLE_UTF8_CONSOLE
 // Without this macro, you may need to manually configure your console for UTF-8:
 // - Use 'chcp 65001' in cmd before running
 // - Or set console properties to use UTF-8
 // - Or use Windows Terminal which has better UTF-8 support
 
+// Windows UTF-8 console initialization (optional feature)
+#if defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
+#include <windows.h>
+
+// Undefine conflicting Windows macros that can interfere with ulog enums
+#ifdef ERROR
+#undef ERROR
+#endif
+#ifdef TRACE
+#undef TRACE
+#endif
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#endif // defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
+
 #include "ulog/ulog.h"
 #include <iostream>
+
+// Windows UTF-8 console initialization implementation
+#if defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
+
+/**
+ * @brief Initialize UTF-8 console output on Windows
+ * @return true if initialization was successful
+ */
+bool initialize_utf8_console() {
+    static bool initialized = false;
+    if (!initialized) {
+        // Set console output code page to UTF-8
+        SetConsoleOutputCP(CP_UTF8);
+        SetConsoleCP(CP_UTF8);
+        
+        // For better UTF-8 support in console applications
+        // Note: We avoid _setmode as it can interfere with other output
+        // The /utf-8 compiler flag ensures proper source encoding
+        
+        initialized = true;
+        return true;
+    }
+    return true;
+}
+#endif // defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
 
 int main() {
     std::cout << "=== ulog Windows UTF-8 Demo ===" << std::endl;
@@ -28,12 +69,18 @@ int main() {
     std::cout << "and demonstrating ULOG_ENABLE_UTF8_CONSOLE macro" << std::endl;
     std::cout << std::endl;
 
+    // Initialize UTF-8 console support if enabled
+#if defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
+    bool utf8_initialized = initialize_utf8_console();
+    std::cout << "UTF-8 console initialization: " << (utf8_initialized ? "SUCCESS" : "FAILED") << std::endl;
+#endif
+
     // Show macro configuration status
     std::cout << "Macro Configuration:" << std::endl;
 #ifdef ULOG_ENABLE_UTF8_CONSOLE
     std::cout << "✓ ULOG_ENABLE_UTF8_CONSOLE is ENABLED" << std::endl;
     std::cout << "  - Windows UTF-8 console initialization code is included" << std::endl;
-    std::cout << "  - SetConsoleOutputCP(CP_UTF8) will be called automatically" << std::endl;
+    std::cout << "  - SetConsoleOutputCP(CP_UTF8) was called manually in this demo" << std::endl;
 #else
     std::cout << "✗ ULOG_ENABLE_UTF8_CONSOLE is DISABLED" << std::endl;
     std::cout << "  - Windows UTF-8 console initialization code is excluded" << std::endl;
