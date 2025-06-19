@@ -147,9 +147,9 @@ public:
         std::cout << "Total:  " << (passed_count_ + failed_count_) << std::endl;
         
         if (failed_count_ == 0) {
-            std::cout << "All tests PASSED! ✓" << std::endl;
+            std::cout << u8"All tests PASSED! ✓" << std::endl;
         } else {
-            std::cout << "Some tests FAILED! ✗" << std::endl;
+            std::cout << u8"Some tests FAILED! ✗" << std::endl;
         }
     }
     
@@ -163,10 +163,10 @@ public:
         
         try {
             test_func();
-            std::cout << "✓ PASSED: " << test_name << std::endl;
+            std::cout << u8"✓ PASSED: " << test_name << std::endl;
             passed_count_++;
         } catch (const std::exception& e) {
-            std::cout << "✗ FAILED: " << test_name << std::endl;
+            std::cout << u8"✗ FAILED: " << test_name << std::endl;
             std::cout << "  Error: " << e.what() << std::endl;
             failed_count_++;
         }

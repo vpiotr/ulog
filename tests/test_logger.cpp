@@ -460,8 +460,8 @@ UTEST_FUNC_DEF2(Logger, CleanMessageUnicode) {
     logger.enable_buffer();
     
     // Test that Unicode characters are preserved
-    std::string unicode_message = "Message with unicode: ñáéíóú 中文 🙂 Ω α β γ";
-    std::string mixed_message = "Unicode: ñáéíóú\nwith newline\tand tab";
+    std::string unicode_message = u8"Message with unicode: ñáéíóú 中文 🙂 Ω α β γ";
+    std::string mixed_message = u8"Unicode: ñáéíóú\nwith newline\tand tab";
     
     logger.info(unicode_message);
     logger.info(mixed_message);
@@ -476,13 +476,13 @@ UTEST_FUNC_DEF2(Logger, CleanMessageUnicode) {
     }
     
     // Check that Unicode characters are preserved
-    UTEST_ASSERT_NOT_EQUALS(messages[0].find("ñáéíóú"), std::string::npos);
-    UTEST_ASSERT_NOT_EQUALS(messages[0].find("中文"), std::string::npos);
-    UTEST_ASSERT_NOT_EQUALS(messages[0].find("🙂"), std::string::npos);
-    UTEST_ASSERT_NOT_EQUALS(messages[0].find("Ω α β γ"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(messages[0].find(u8"ñáéíóú"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(messages[0].find(u8"中文"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(messages[0].find(u8"🙂"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(messages[0].find(u8"Ω α β γ"), std::string::npos);
     
     // Check mixed message: Unicode preserved, control chars cleaned
-    UTEST_ASSERT_NOT_EQUALS(messages[1].find("ñáéíóú"), std::string::npos);
+    UTEST_ASSERT_NOT_EQUALS(messages[1].find(u8"ñáéíóú"), std::string::npos);
     UTEST_ASSERT_NOT_EQUALS(messages[1].find("with newline and tab"), std::string::npos); // whitespace converted to spaces
     
     logger.disable_buffer();
@@ -583,7 +583,7 @@ UTEST_FUNC_DEF2(Logger, CleanMessageUtf8Option) {
     logger_no_utf8.disable_utf8_handling();
     
     // Test string with UTF-8 characters and control characters
-    std::string test_message = "Hello\nWorld\t中文\x08\x1F🙂";
+    std::string test_message = u8"Hello\nWorld\t中文\x08\x1F🙂";
     
     logger_utf8.info(test_message);
     logger_no_utf8.info(test_message);
@@ -601,8 +601,8 @@ UTEST_FUNC_DEF2(Logger, CleanMessageUtf8Option) {
     
     // With UTF-8 enabled: newline/tab should be spaces, Unicode chars preserved, control chars as hex
     UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find("Hello World"), std::string::npos); // spaces
-    UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find("中文"), std::string::npos); // Unicode preserved
-    UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find("🙂"), std::string::npos); // Emoji preserved
+    UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find(u8"中文"), std::string::npos); // Unicode preserved
+    UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find(u8"🙂"), std::string::npos); // Emoji preserved
     UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find("\\x08"), std::string::npos); // Control char as hex
     UTEST_ASSERT_NOT_EQUALS(cleaned_with_utf8.find("\\x1F"), std::string::npos); // Control char as hex
     

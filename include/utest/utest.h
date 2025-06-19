@@ -713,8 +713,8 @@ namespace details {
         result.elapsedTime = 0.0;
         
         // Get checkmark symbols
-        const char* successMark = getUseAsciiCheckmarks() ? "[OK]" : "✓";
-        const char* failMark = getUseAsciiCheckmarks() ? "[FAIL]" : "✗";
+        const char* successMark = getUseAsciiCheckmarks() ? "[OK]" : u8"✓";
+        const char* failMark = getUseAsciiCheckmarks() ? "[FAIL]" : u8"✗";
         
         // Show test name before execution if verbose mode is enabled
         if (getVerboseMode()) {
@@ -777,8 +777,8 @@ namespace details {
         result.elapsedTime = 0.0;
         
         // Get checkmark symbols
-        const char* successMark = getUseAsciiCheckmarks() ? "[OK]" : "✓";
-        const char* failMark = getUseAsciiCheckmarks() ? "[FAIL]" : "✗";
+        const char* successMark = getUseAsciiCheckmarks() ? "[OK]" : u8"✓";
+        const char* failMark = getUseAsciiCheckmarks() ? "[FAIL]" : u8"✗";
         
         // Show test name before execution if verbose mode is enabled
         if (getVerboseMode()) {
@@ -1148,8 +1148,8 @@ namespace details {
     auto& results = utest::details::getTestResults(); \
     int passed = 0, failed = 0; \
     double totalTime = 0.0; \
-    const char* successMark = utest::details::getUseAsciiCheckmarks() ? "[OK]" : "✓"; \
-    const char* failMark = utest::details::getUseAsciiCheckmarks() ? "[FAIL]" : "✗"; \
+    const char* successMark = utest::details::getUseAsciiCheckmarks() ? "[OK]" : u8"✓"; \
+    const char* failMark = utest::details::getUseAsciiCheckmarks() ? "[FAIL]" : u8"✗"; \
     if (results.empty()) { \
         std::cout << "No tests were run!\n"; \
         std::cout << "======================================\n"; \

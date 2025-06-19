@@ -270,7 +270,7 @@ void demo_primitive_formatting() {
     
     logger.warn("HTTP Error: {?} (hex: {?})", errorCode, hexErrorCode);
     logger.info("Connection status: {?}", connectionStatus);
-    logger.info("Temperature: {?}°C", tempDisplay);
+    logger.info(u8"Temperature: {?}°C", tempDisplay);
     logger.info("Success rate: {?}", successDisplay);
 }
 
