@@ -801,7 +801,7 @@ private:
                 }
             } else if (!is_utf8 && ch >= 0x80) {
                 // UTF-8 handling disabled - treat high-bit characters as regular bytes
-                cleaned += ch;
+                cleaned += static_cast<char>(ch);
             } else if (ch < 32) {
                 // ASCII control character - check if it's whitespace
                 if (ch == '\t' || ch == '\n' || ch == '\r' || ch == '\v' || ch == '\f') {
@@ -813,7 +813,7 @@ private:
                 }
             } else {
                 // Regular ASCII character (32 and above), keep as-is
-                cleaned += ch;
+                cleaned += static_cast<char>(ch);
             }
         }
         

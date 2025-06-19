@@ -66,7 +66,7 @@ public:
         auto distribution = stats_.level_distribution();
         oss << "Message Distribution by Level:" << std::endl;
         for (const auto& pair : distribution) {
-            double percentage = (static_cast<double>(pair.second) / total) * 100.0;
+            double percentage = (static_cast<double>(pair.second) / static_cast<double>(total)) * 100.0;
             oss << "  " << to_string(pair.first) << ": " << pair.second 
                 << " (" << std::fixed << std::setprecision(1) << percentage << "%)" << std::endl;
         }
@@ -88,7 +88,7 @@ public:
         if (!top_prefixes.empty()) {
             oss << "Top 5 Message Prefixes:" << std::endl;
             for (const auto& pair : top_prefixes) {
-                double percentage = (static_cast<double>(pair.second) / total) * 100.0;
+                double percentage = (static_cast<double>(pair.second) / static_cast<double>(total)) * 100.0;
                 oss << "  \"" << pair.first << "\": " << pair.second
                     << " (" << std::fixed << std::setprecision(1) << percentage << "%)" << std::endl;
             }
@@ -141,7 +141,7 @@ public:
             
             auto total_messages = stats_.total_messages();
             if (total_messages > 0) {
-                double slow_percentage = (static_cast<double>(perf_metrics.slow_operations_count) / total_messages) * 100.0;
+                double slow_percentage = (static_cast<double>(perf_metrics.slow_operations_count) / static_cast<double>(total_messages)) * 100.0;
                 if (slow_percentage > 20.0) {
                     oss << "  ⚠ High percentage of slow operations (" << std::fixed << std::setprecision(1) 
                         << slow_percentage << "%). Review system performance." << std::endl;
@@ -250,7 +250,7 @@ public:
         if (!outliers_90.empty() || !outliers_95.empty()) {
             oss << "Outlier Insights:" << std::endl;
             
-            if (outliers_95.size() > outliers_90.size() * 0.5) {
+            if (static_cast<double>(outliers_95.size()) > static_cast<double>(outliers_90.size()) * 0.5) {
                 oss << "  ⚠ High concentration of extreme outliers. Check for systematic issues." << std::endl;
             }
             
@@ -269,7 +269,7 @@ public:
                 auto max_prefix = std::max_element(outlier_prefixes.begin(), outlier_prefixes.end(),
                     [](const auto& a, const auto& b) { return a.second < b.second; });
                 
-                if (max_prefix->second > outliers_90.size() * 0.3) {
+                if (static_cast<double>(max_prefix->second) > static_cast<double>(outliers_90.size()) * 0.3) {
                     oss << "  ⚠ Outliers concentrated in operations starting with \"" 
                         << max_prefix->first << "\" (" << max_prefix->second << " occurrences)." << std::endl;
                 }
@@ -313,13 +313,13 @@ public:
         
         auto distribution = stats_.level_distribution();
         auto error_count = distribution[LogLevel::ERROR] + distribution[LogLevel::FATAL];
-        if (error_count > total * 0.1) {
+        if (static_cast<double>(error_count) > static_cast<double>(total) * 0.1) {
             oss << "• High error rate detected (" << error_count << "/" << total 
                 << "). Review error handling and system stability." << std::endl;
         }
         
         auto outliers = stats_.delay_outliers(95.0);
-        if (outliers.size() > total * 0.05) {
+        if (static_cast<double>(outliers.size()) > static_cast<double>(total) * 0.05) {
             oss << "• Frequent performance outliers detected. Consider performance optimization." << std::endl;
         }
         

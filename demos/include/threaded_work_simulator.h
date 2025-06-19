@@ -53,13 +53,13 @@ public:
         
         for (int i = 0; i < config.num_operations; ++i) {
             // Choose random operation prefix
-            const auto& prefix = config.operation_prefixes[i % config.operation_prefixes.size()];
+            const auto& prefix = config.operation_prefixes[static_cast<size_t>(i) % config.operation_prefixes.size()];
             
             logger.info("{0} operation {1} starting", prefix, i + 1);
             
             // Simulate work with variable delay
             auto delay = config.base_delay + std::chrono::milliseconds(
-                rng() % (config.max_jitter.count() + 1));
+                rng() % static_cast<unsigned long>(config.max_jitter.count() + 1));
             std::this_thread::sleep_for(delay);
             
             logger.info("{0} operation {1} completed in {2}ms", prefix, i + 1, delay.count());
@@ -80,12 +80,12 @@ public:
         logger.info("{0} starting request handling", config.worker_name);
         
         for (int i = 0; i < config.num_operations; ++i) {
-            const auto& prefix = config.operation_prefixes[i % config.operation_prefixes.size()];
+            const auto& prefix = config.operation_prefixes[static_cast<size_t>(i) % config.operation_prefixes.size()];
             
             logger.info("{0} request {1} received", prefix, i + 1);
             
             auto delay = config.base_delay + std::chrono::milliseconds(
-                rng() % (config.max_jitter.count() + 1));
+                rng() % static_cast<unsigned long>(config.max_jitter.count() + 1));
             std::this_thread::sleep_for(delay);
             
             // Occasionally log an error
@@ -110,12 +110,12 @@ public:
         logger.info("{0} background processing started", config.worker_name);
         
         for (int i = 0; i < config.num_operations; ++i) {
-            const auto& prefix = config.operation_prefixes[i % config.operation_prefixes.size()];
+            const auto& prefix = config.operation_prefixes[static_cast<size_t>(i) % config.operation_prefixes.size()];
             
             logger.debug("{0} processing batch {1}", prefix, i + 1);
             
             auto delay = config.base_delay + std::chrono::milliseconds(
-                rng() % (config.max_jitter.count() + 1));
+                rng() % static_cast<unsigned long>(config.max_jitter.count() + 1));
             std::this_thread::sleep_for(delay);
             
             logger.debug("{0} batch {1} processed", prefix, i + 1);
@@ -136,12 +136,12 @@ public:
         logger.info("{0} monitoring started", config.worker_name);
         
         for (int i = 0; i < config.num_operations; ++i) {
-            const auto& prefix = config.operation_prefixes[i % config.operation_prefixes.size()];
+            const auto& prefix = config.operation_prefixes[static_cast<size_t>(i) % config.operation_prefixes.size()];
             
             logger.trace("{0} checking system health", prefix);
             
             auto delay = config.base_delay + std::chrono::milliseconds(
-                rng() % (config.max_jitter.count() + 1));
+                rng() % static_cast<unsigned long>(config.max_jitter.count() + 1));
             std::this_thread::sleep_for(delay);
             
             // Occasionally trigger an alert

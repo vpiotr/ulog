@@ -73,7 +73,7 @@ public:
         setup();
         
         BenchmarkStats stats;
-        stats.iteration_times_ms.reserve(num_iterations);
+        stats.iteration_times_ms.reserve(static_cast<size_t>(num_iterations));
         
         std::cout << "Messages per iteration: " << num_messages << std::endl;
         std::cout << "Running " << num_iterations << " iterations..." << std::endl;
@@ -88,7 +88,7 @@ public:
             
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            double duration_ms = duration.count() / 1000.0;
+            double duration_ms = static_cast<double>(duration.count()) / 1000.0;
             stats.iteration_times_ms.push_back(duration_ms);
             
             std::cout << "Iteration " << (iteration + 1) << ": " 
@@ -247,7 +247,7 @@ protected:
         
         // Add multiple observers to simulate real-world usage
         observers_.clear();
-        observers_.reserve(num_observers_);
+        observers_.reserve(static_cast<size_t>(num_observers_));
         
         for (int i = 0; i < num_observers_; ++i) {
             auto observer = std::make_shared<CountingObserver>();

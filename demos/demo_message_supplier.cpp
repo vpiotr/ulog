@@ -81,7 +81,7 @@ int main() {
             std::cout << "Both approaches: 0ms (too fast to measure)" << std::endl;
         }
     } else {
-        double speedup = (double)traditional_time.count() / supplier_time.count();
+        double speedup = static_cast<double>(traditional_time.count()) / static_cast<double>(supplier_time.count());
         std::cout << "Speedup: " << std::fixed << std::setprecision(1) << speedup << "x faster!" << std::endl;
     }
     

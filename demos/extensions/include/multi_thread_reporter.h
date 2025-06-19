@@ -175,7 +175,7 @@ private:
         
         if (entries.size() > 1) {
             report.avg_message_interval = std::chrono::milliseconds(
-                report.total_duration.count() / (entries.size() - 1));
+                report.total_duration.count() / static_cast<long>(entries.size() - 1));
         }
         
         // Analyze entries for detailed statistics
@@ -222,12 +222,12 @@ private:
         
         // Calculate error rate
         report.error_rate = (entries.size() > 0) ? 
-            (static_cast<double>(report.error_count) / entries.size() * 100.0) : 0.0;
+            (static_cast<double>(report.error_count) / static_cast<double>(entries.size()) * 100.0) : 0.0;
         
         // Detect outliers (intervals significantly larger than 90th percentile)
         if (!intervals.empty()) {
             std::sort(intervals.begin(), intervals.end());
-            size_t p90_index = static_cast<size_t>(intervals.size() * 0.9);
+            size_t p90_index = static_cast<size_t>(static_cast<double>(intervals.size()) * 0.9);
             auto p90_threshold = intervals[std::min(p90_index, intervals.size() - 1)];
             
             for (const auto& interval : intervals) {
@@ -275,7 +275,7 @@ private:
         
         // Calculate error rate
         aggregated.error_rate = (aggregated.message_count > 0) ? 
-            (static_cast<double>(aggregated.error_count) / aggregated.message_count * 100.0) : 0.0;
+            (static_cast<double>(aggregated.error_count) / static_cast<double>(aggregated.message_count) * 100.0) : 0.0;
         
         // Calculate average interval across all threads
         size_t total_intervals = 0;
@@ -289,7 +289,7 @@ private:
         
         if (total_intervals > 0) {
             aggregated.avg_message_interval = std::chrono::milliseconds(
-                total_interval_time.count() / total_intervals);
+                total_interval_time.count() / static_cast<long>(total_intervals));
         }
         
         return aggregated;

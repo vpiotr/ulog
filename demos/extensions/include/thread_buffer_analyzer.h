@@ -184,7 +184,7 @@ public:
             }
         }
         
-        stats.avg_entries_per_thread = static_cast<double>(stats.total_entries) / stats.total_threads;
+        stats.avg_entries_per_thread = static_cast<double>(stats.total_entries) / static_cast<double>(stats.total_threads);
         
         return stats;
     }

@@ -288,7 +288,7 @@ public:
         std::vector<std::chrono::milliseconds> sorted_intervals = intervals;
         std::sort(sorted_intervals.begin(), sorted_intervals.end());
         
-        size_t percentile_index = static_cast<size_t>((percentile / 100.0) * sorted_intervals.size());
+        size_t percentile_index = static_cast<size_t>((percentile / 100.0) * static_cast<double>(sorted_intervals.size()));
         if (percentile_index >= sorted_intervals.size()) {
             percentile_index = sorted_intervals.size() - 1;
         }
@@ -356,7 +356,7 @@ public:
                   });
         
         if (entries.size() > n) {
-            entries.erase(entries.begin() + n, entries.end());
+            entries.erase(entries.begin() + static_cast<std::ptrdiff_t>(n), entries.end());
         }
         
         return entries;

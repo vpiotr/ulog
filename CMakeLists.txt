@@ -8,16 +8,29 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Compiler-specific options
 if(MSVC)
-    # Enable UTF-8 source and execution character sets for Visual Studio
+    # Windows (MSVC) - Enable most warnings including conversion warnings
     add_compile_options(/utf-8)
-    add_compile_options(/W4)
+    add_compile_options(/W4 /WX- /wd4996)
     # Ensure proper UTF-8 handling in runtime
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 elseif(WIN32)
     # For other Windows compilers (MinGW, Clang, etc.)
     add_compile_options(-Wall -Wextra -Wpedantic)
 else()
-    add_compile_options(-Wall -Wextra -Wpedantic)
+    # Linux/GCC or Clang - Enable comprehensive warnings including conversion warnings
+    add_compile_options(
+        -Wall                    # Enable most warnings
+        -Wextra                  # Enable extra warnings
+        -Wconversion             # Warn about type conversions that may alter values
+        -Wsign-conversion        # Warn about sign conversions
+        -Wfloat-conversion       # Warn about float conversions
+        -Wcast-qual              # Warn about casts that remove qualifiers
+        -Wcast-align             # Warn about casts that increase alignment requirements
+        -Wshadow                 # Warn about variable shadowing
+        -Wpedantic               # Warn about non-standard C++
+        -Wunused                 # Warn about unused variables/functions
+        -Wuninitialized          # Warn about uninitialized variables
+    )
 endif()
 
 # Function to configure UTF-8 settings for all targets
