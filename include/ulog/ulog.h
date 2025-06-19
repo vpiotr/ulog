@@ -69,6 +69,19 @@
 #include <ctime>
 #include <type_traits>
 
+// Undefine common Windows macros that can conflict with our enums
+#if defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
+#ifdef ERROR
+#undef ERROR
+#endif
+#ifdef TRACE
+#undef TRACE
+#endif
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#endif // defined(_WIN32) && defined(ULOG_ENABLE_UTF8_CONSOLE)
+
 #ifdef ULOG_USE_USTR
 #include "ustr/ustr.h" // Assuming ustr.h is in an include path accessible as "ustr/ustr.h"
 #else
