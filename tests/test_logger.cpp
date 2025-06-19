@@ -155,13 +155,13 @@ UTEST_FUNC_DEF2(Logger, RegistryConsistency) {
     auto& logger2 = ulog::getLogger("SameLogger");
     
     // Should be the same instance
-    UTEST_ASSERT_EQUALS(&logger1, &logger2);
+    UTEST_ASSERT_PTR_EQUALS(&logger1, &logger2);
     
     auto& global1 = ulog::getLogger();
     auto& global2 = ulog::getLogger();
     
     // Should be the same global instance
-    UTEST_ASSERT_EQUALS(&global1, &global2);
+    UTEST_ASSERT_PTR_EQUALS(&global1, &global2);
 }
 
 UTEST_FUNC_DEF2(Logger, LogLevelFiltering) {
@@ -357,7 +357,7 @@ UTEST_FUNC_DEF2(Logger, AutoFlushingScope) {
     
     // After scope exit, flush should have been called once
     UTEST_ASSERT_EQUALS(observer->flush_count, 1);
-    UTEST_ASSERT_EQUALS(observer->last_flushed_logger, "AutoFlushTest");
+    UTEST_ASSERT_STR_EQUALS(observer->last_flushed_logger, "AutoFlushTest");
     
     // Test multiple nested scopes
     {

@@ -20,6 +20,7 @@
  * - Unicode and ASCII checkmarks for test results
  * - Exception testing (throw/no-throw assertions)
  * - String and numeric comparisons
+ * - String substring testing (contains/not contains)
  * - Comprehensive test reporting
  * 
  * @section usage_sec Basic Usage
@@ -33,6 +34,12 @@
  *     UTEST_ASSERT_GT(5, 3);
  * }
  * 
+ * UTEST_FUNC_DEF(StringTests) {
+ *     UTEST_ASSERT_STR_EQUALS("hello", "hello");
+ *     UTEST_ASSERT_STR_CONTAINS("hello world", "world");
+ *     UTEST_ASSERT_STR_NOT_CONTAINS("success message", "error");
+ * }
+ * 
  * UTEST_FUNC_DEF2(Calculator, Addition) {
  *     UTEST_ASSERT_EQUALS(add(2, 3), 5);
  * }
@@ -41,6 +48,7 @@
  *     UTEST_PROLOG();
  *     
  *     UTEST_FUNC(BasicMath);
+ *     UTEST_FUNC(StringTests);
  *     UTEST_FUNC2(Calculator, Addition);
  *     
  *     UTEST_EPILOG();
@@ -210,6 +218,37 @@ namespace details {
         !std::is_same<T, char16_t>::value &&
         !std::is_same<T, char32_t>::value> {};
 
+    // Helper to detect any pointer type or array type (ALL are disallowed in UTEST_ASSERT_EQUALS)
+    // This includes string literals which decay to const char*
+    template<typename T>
+    struct is_any_pointer_or_array : std::integral_constant<bool, 
+        std::is_pointer<T>::value ||
+        std::is_array<T>::value ||
+        std::is_pointer<typename std::decay<T>::type>::value ||
+        std::is_member_pointer<T>::value ||
+        (std::is_pointer<T>::value && std::is_function<typename std::remove_pointer<T>::type>::value)> {};
+
+    // Compile-time assertion for pointer/array detection
+    template<typename T, typename U>
+    inline void check_not_pointer_types() {
+        static_assert(!is_any_pointer_or_array<T>::value && !is_any_pointer_or_array<U>::value, 
+                     "UTEST_ASSERT_EQUALS should not be used with pointers or string literals. Use UTEST_ASSERT_STR_EQUALS for string comparison or UTEST_ASSERT_PTR_EQUALS for pointer comparison.");
+    }
+
+    // Helper to validate that only pointer types are used with UTEST_ASSERT_PTR_EQUALS
+    template<typename T>
+    struct is_valid_pointer : std::integral_constant<bool, 
+        std::is_pointer<T>::value || 
+        std::is_member_pointer<T>::value ||
+        std::is_null_pointer<T>::value> {};
+
+    // Compile-time assertion for pointer validation in UTEST_ASSERT_PTR_EQUALS
+    template<typename T, typename U>
+    inline void check_only_pointer_types() {
+        static_assert(is_valid_pointer<T>::value && is_valid_pointer<U>::value, 
+                     "UTEST_ASSERT_PTR_EQUALS can only be used with pointer types. Use UTEST_ASSERT_EQUALS for non-pointer comparisons.");
+    }
+
     // For numeric types, use std::to_string
     template<typename T>
     inline typename std::enable_if<is_numeric<T>::value, std::string>::type
@@ -254,6 +293,40 @@ namespace details {
     inline std::string convertToString(char value) {
         return std::string(1, value);
     }
+
+  // Helper for conversion to std::string (handles std::string and const char*)
+  inline std::string to_string_for_str_assert(const std::string& s) { return s; }
+  inline std::string to_string_for_str_assert(const char* s) { return std::string(s); }
+  inline std::string to_string_for_str_assert(char* s) { return std::string(s); }
+  
+  // Wide string conversion with proper handling to avoid data loss warnings
+  inline std::string to_string_for_str_assert(const std::wstring& s) { 
+    std::string result;
+    result.reserve(s.size());
+    for (wchar_t wc : s) {
+      // Explicitly cast to char with proper bounds checking
+      if (wc <= 127) {
+        result += static_cast<char>(wc);
+      } else {
+        result += '?'; // Replace non-ASCII characters with placeholder
+      }
+    }
+    return result;
+  }
+  
+  inline std::string to_string_for_str_assert(const wchar_t* s) { 
+    if (s == nullptr) return std::string();
+    return to_string_for_str_assert(std::wstring(s));
+  }
+  template<typename T>
+  inline std::string to_string_for_str_assert(const T& s) { return convertToString(s); }
+
+  // Helper for string contains check, always converts both arguments
+  template<typename S1, typename S2>
+  inline bool str_contains(const S1& str, const S2& substr) {
+    return to_string_for_str_assert(str).find(to_string_for_str_assert(substr)) != std::string::npos;
+  }
+
 }
 
 /**
@@ -364,6 +437,8 @@ namespace details {
  * Uses operator!= to compare values. Supports any type that can be
  * converted to string for error messages.
  * 
+ * Note: Do not use with pointers. Use UTEST_ASSERT_PTR_EQUALS for pointer comparison.
+ * 
  * @code{.cpp}
  * UTEST_ASSERT_EQUALS(calculator.add(2, 3), 5);
  * UTEST_ASSERT_EQUALS(std::string("hello"), "hello");
@@ -371,6 +446,7 @@ namespace details {
  */
 #define UTEST_ASSERT_EQUALS( x, y )                                \
 {                                                                   \
+  utest::details::check_not_pointer_types<decltype(x), decltype(y)>(); \
   if( ( x ) != ( y ) )                                              \
   {                                                                 \
     std::ostringstream ss;                                          \
@@ -387,6 +463,7 @@ namespace details {
  * @param msg Custom error message
  * 
  * Like UTEST_ASSERT_EQUALS but with a custom error message.
+ * Note: Do not use with pointers. Use UTEST_ASSERT_PTR_EQUALS_MSG for pointer comparison.
  * 
  * @code{.cpp}
  * UTEST_ASSERT_EQUALS_MSG(result, expected, "Calculation result mismatch");
@@ -394,11 +471,109 @@ namespace details {
  */
 #define UTEST_ASSERT_EQUALS_MSG( x, y, msg )                       \
 {                                                                   \
+  utest::details::check_not_pointer_types<decltype(x), decltype(y)>(); \
   if( ( x ) != ( y ) )                                              \
   {                                                                 \
     std::ostringstream ss;                                          \
     ss << "Assertion failed, '" << msg << "': "                     \
        << UTEST_TO_STRING( ( x ) ) << " != " << UTEST_TO_STRING( ( y ) ); \
+    throw utest::AssertionException(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+  }                                                                 \
+}
+
+/**
+ * @brief Assert that two pointers are equal
+ * @param ptr1 First pointer
+ * @param ptr2 Second pointer
+ * 
+ * Compares pointer addresses directly. Use this for pointer comparison
+ * instead of UTEST_ASSERT_EQUALS.
+ * 
+ * @code{.cpp}
+ * int* p1 = &value;
+ * int* p2 = &value;
+ * UTEST_ASSERT_PTR_EQUALS(p1, p2);
+ * @endcode
+ */
+#define UTEST_ASSERT_PTR_EQUALS( ptr1, ptr2 )                      \
+{                                                                   \
+  utest::details::check_only_pointer_types<decltype(ptr1), decltype(ptr2)>(); \
+  if( ( ptr1 ) != ( ptr2 ) )                                       \
+  {                                                                 \
+    std::ostringstream ss;                                          \
+    ss << "Pointer assertion failed: " << reinterpret_cast<const void*>( ptr1 ) \
+       << " != " << reinterpret_cast<const void*>( ptr2 );               \
+    throw utest::AssertionException(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+  }                                                                 \
+}
+
+/**
+ * @brief Assert that two pointers are equal with custom message
+ * @param ptr1 First pointer
+ * @param ptr2 Second pointer
+ * @param msg Custom error message
+ * 
+ * Like UTEST_ASSERT_PTR_EQUALS but with a custom error message.
+ * 
+ * @code{.cpp}
+ * UTEST_ASSERT_PTR_EQUALS_MSG(p1, p2, "Pointers should point to same object");
+ * @endcode
+ */
+#define UTEST_ASSERT_PTR_EQUALS_MSG( ptr1, ptr2, msg )             \
+{                                                                   \
+  utest::details::check_only_pointer_types<decltype(ptr1), decltype(ptr2)>(); \
+  if( ( ptr1 ) != ( ptr2 ) )                                       \
+  {                                                                 \
+    std::ostringstream ss;                                          \
+    ss << "Pointer assertion failed, '" << msg << "': "             \
+       << reinterpret_cast<const void*>( ptr1 ) << " != " << reinterpret_cast<const void*>( ptr2 ); \
+    throw utest::AssertionException(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+  }                                                                 \
+}
+
+/**
+ * @brief Assert that two pointers are not equal
+ * @param ptr1 First pointer
+ * @param ptr2 Second pointer
+ * 
+ * Throws AssertionException if the pointers are equal.
+ * 
+ * @code{.cpp}
+ * int* p1 = &value1;
+ * int* p2 = &value2;
+ * UTEST_ASSERT_PTR_NOT_EQUALS(p1, p2);
+ * @endcode
+ */
+#define UTEST_ASSERT_PTR_NOT_EQUALS( ptr1, ptr2 )                  \
+{                                                                   \
+  if( ( ptr1 ) == ( ptr2 ) )                                       \
+  {                                                                 \
+    std::ostringstream ss;                                          \
+    ss << "Pointer assertion failed: " << reinterpret_cast<const void*>( ptr1 ) \
+       << " == " << reinterpret_cast<const void*>( ptr2 );          \
+    throw utest::AssertionException(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+  }                                                                 \
+}
+
+/**
+ * @brief Assert that two pointers are not equal with custom message
+ * @param ptr1 First pointer
+ * @param ptr2 Second pointer
+ * @param msg Custom error message
+ * 
+ * Like UTEST_ASSERT_PTR_NOT_EQUALS but with a custom error message.
+ * 
+ * @code{.cpp}
+ * UTEST_ASSERT_PTR_NOT_EQUALS_MSG(p1, p2, "Pointers should be different");
+ * @endcode
+ */
+#define UTEST_ASSERT_PTR_NOT_EQUALS_MSG( ptr1, ptr2, msg )         \
+{                                                                   \
+  if( ( ptr1 ) == ( ptr2 ) )                                       \
+  {                                                                 \
+    std::ostringstream ss;                                          \
+    ss << "Pointer assertion failed, '" << msg << "': "             \
+       << reinterpret_cast<const void*>( ptr1 ) << " == " << reinterpret_cast<const void*>( ptr2 ); \
     throw utest::AssertionException(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__); \
   }                                                                 \
 }
@@ -476,6 +651,57 @@ namespace details {
     std::ostringstream ss;                                          \
     ss << "String assertion failed: \"" << std::string( x )         \
        << "\" == \"" << std::string( y ) << "\"";                   \
+    throw utest::AssertionException(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+  }                                                                 \
+}
+
+/**
+ * @brief Assert that a string contains a substring
+ * @param str String to search in
+ * @param substr Substring to search for
+ * 
+ * Throws AssertionException if the string does not contain the substring.
+ * 
+ * @code{.cpp}
+ * UTEST_ASSERT_STR_CONTAINS("Hello world", "world");
+ * UTEST_ASSERT_STR_CONTAINS(myString, "important text");
+ * @endcode
+ */
+
+#define UTEST_ASSERT_STR_CONTAINS( a_string, a_substr )                                   \
+{                                                                                  \
+  if( !utest::details::str_contains(a_string, a_substr) )                                 \
+  {                                                                                \
+    std::string _utest_str = utest::details::to_string_for_str_assert(a_string);        \
+    std::string _utest_substr = utest::details::to_string_for_str_assert(a_substr);  \
+    std::ostringstream ss;                                                         \
+    ss << "String assertion failed: \"" << _utest_str                              \
+      << "\" does not contain \"" << _utest_substr << "\"";                       \
+    throw utest::AssertionException(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+  }                                                                                \
+}
+
+/**
+ * @brief Assert that a string does not contain a substring
+ * @param str String to search in
+ * @param substr Substring to search for
+ * 
+ * Throws AssertionException if the string contains the substring.
+ * 
+ * @code{.cpp}
+ * UTEST_ASSERT_STR_NOT_CONTAINS("Hello world", "error");
+ * UTEST_ASSERT_STR_NOT_CONTAINS(response, "failure");
+ * @endcode
+ */
+#define UTEST_ASSERT_STR_NOT_CONTAINS( a_string, a_substr )               \
+{                                                                   \
+  if( utest::details::str_contains(a_string, a_substr) )                                 \
+  {                                                                 \
+    std::string _utest_str = utest::details::to_string_for_str_assert(a_string);        \
+    std::string _utest_substr = utest::details::to_string_for_str_assert(a_substr);      \
+    std::ostringstream ss;                                          \
+    ss << "String assertion failed: \"" << _utest_str               \
+       << "\" contains \"" << _utest_substr << "\"";                \
     throw utest::AssertionException(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__); \
   }                                                                 \
 }
@@ -559,13 +785,63 @@ namespace details {
   }                                                                 \
 }
 
-#define UTEST_ASSERT_GT_MSG( x, y, msg )                           \
+/**
+ * @brief Assert that a string contains a substring with custom message
+ * @param str String to search in
+ * @param substr Substring to search for
+ * @param msg Custom error message
+ * 
+ * Like UTEST_ASSERT_STR_CONTAINS but with a custom error message.
+ * 
+ * @code{.cpp}
+ * UTEST_ASSERT_STR_CONTAINS_MSG(response, "success", "Response should indicate success");
+ * @endcode
+ */
+#define UTEST_ASSERT_STR_CONTAINS_MSG( a_string, a_substr, a_msg )          \
 {                                                                   \
-  if( !( ( x ) > ( y ) ) )                                          \
+  if( !utest::details::str_contains(a_string, a_substr))         \
+  {                                                                 \
+    std::string _utest_str = utest::details::to_string_for_str_assert(a_string);        \
+    std::string _utest_substr = utest::details::to_string_for_str_assert(a_substr);      \
+    std::ostringstream ss;                                          \
+    ss << "String assertion failed, '" << a_msg << "': \""            \
+       << _utest_str << "\" does not contain \"" << _utest_substr << "\""; \
+    throw utest::AssertionException(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+  }                                                                 \
+}
+
+/**
+ * @brief Assert that a string does not contain a substring with custom message
+ * @param str String to search in
+ * @param substr Substring to search for
+ * @param msg Custom error message
+ * 
+ * Like UTEST_ASSERT_STR_NOT_CONTAINS but with a custom error message.
+ * 
+ * @code{.cpp}
+ * UTEST_ASSERT_STR_NOT_CONTAINS_MSG(response, "error", "Response should not contain errors");
+ * @endcode
+ */
+#define UTEST_ASSERT_STR_NOT_CONTAINS_MSG( a_string, a_substr, a_msg )      \
+{                                                                   \
+  if( utest::details::str_contains(a_string, a_substr) )         \
+  {                                                                 \
+    std::string _utest_str = utest::details::to_string_for_str_assert(a_string);        \
+    std::string _utest_substr = utest::details::to_string_for_str_assert(a_substr);      \
+    std::ostringstream ss;                                          \
+    ss << "String assertion failed, '" << a_msg << "': \""            \
+       << _utest_str << "\" contains \"" << _utest_substr << "\"";  \
+    throw utest::AssertionException(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+  }                                                                 \
+}
+
+#define UTEST_ASSERT_GT_MSG( x, y, msg )                          \
+{                                                                   \
+  if( !( ( x ) > ( y ) ) )                                         \
   {                                                                 \
     std::ostringstream ss;                                          \
     ss << "Assertion failed, '" << msg << "': "                     \
-       << UTEST_TO_STRING( ( x ) ) << " is not greater than "       \
+       << UTEST_TO_STRING( ( x ) ) << " is not greater than or equal to " \
        << UTEST_TO_STRING( ( y ) );                                 \
     throw utest::AssertionException(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__); \
   }                                                                 \
@@ -661,6 +937,34 @@ namespace details {
  */
 #define UTEST_ASSERT_SNEQ( x, y ) UTEST_ASSERT_STR_NOT_EQUALS( x, y )
 
+/**
+ * @brief Short alias for UTEST_ASSERT_STR_CONTAINS
+ * @param str String to search in
+ * @param substr Substring to search for
+ */
+#define UTEST_ASSERT_SC( str, substr ) UTEST_ASSERT_STR_CONTAINS( str, substr )
+
+/**
+ * @brief Short alias for UTEST_ASSERT_STR_NOT_CONTAINS
+ * @param str String to search in
+ * @param substr Substring to search for
+ */
+#define UTEST_ASSERT_SNC( str, substr ) UTEST_ASSERT_STR_NOT_CONTAINS( str, substr )
+
+/**
+ * @brief Short alias for UTEST_ASSERT_STR_CONTAINS
+ * @param str String to search in
+ * @param substr Substring to search for
+ */
+#define UTEST_ASSERT_SC( str, substr ) UTEST_ASSERT_STR_CONTAINS( str, substr )
+
+/**
+ * @brief Short alias for UTEST_ASSERT_STR_NOT_CONTAINS
+ * @param str String to search in
+ * @param substr Substring to search for
+ */
+#define UTEST_ASSERT_SNC( str, substr ) UTEST_ASSERT_STR_NOT_CONTAINS( str, substr )
+
 /** @} */ // end of aliases group
 
 namespace details {
@@ -703,18 +1007,19 @@ namespace details {
         static bool verbose = false;  // Default to non-verbose
         return verbose;
     }
-
+    
     template<typename Func>
     void testFunc(const char *name, Func f, bool &failed) {
         TestResult result;
+        result.name = name;
         result.name = name;
         result.group = ""; // No group for single tests
         result.passed = true;
         result.elapsedTime = 0.0;
         
         // Get checkmark symbols
-        const char* successMark = getUseAsciiCheckmarks() ? "[OK]" : u8"✓";
-        const char* failMark = getUseAsciiCheckmarks() ? "[FAIL]" : u8"✗";
+        const char* successMark = getUseAsciiCheckmarks() ? "[OK]" : "✓";
+        const char* failMark = getUseAsciiCheckmarks() ? "[FAIL]" : "✗";
         
         // Show test name before execution if verbose mode is enabled
         if (getVerboseMode()) {
@@ -727,7 +1032,7 @@ namespace details {
             f();
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            result.elapsedTime = duration.count() / 1000.0; // Convert to milliseconds
+            result.elapsedTime = static_cast<double>(duration.count()) / 1000.0; // Convert to milliseconds
             
             std::cout << successMark << " Test [" << std::string(name) << "] succeeded";
             if (getShowPerformanceInfo()) {
@@ -738,7 +1043,7 @@ namespace details {
         catch (const AssertionException &e) {
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            result.elapsedTime = duration.count() / 1000.0;
+            result.elapsedTime = static_cast<double>(duration.count()) / 1000.0;
             
             std::cout << failMark << " Test [" << std::string(name) << "] failed!, error: " << e.getFormattedMessage();
             if (getShowPerformanceInfo()) {
@@ -752,7 +1057,7 @@ namespace details {
         catch (std::exception &e) {
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            result.elapsedTime = duration.count() / 1000.0;
+            result.elapsedTime = static_cast<double>(duration.count()) / 1000.0;
             
             std::cout << failMark << " Test [" << std::string(name) << "] failed with unexpected exception!, error: " << e.what();
             if (getShowPerformanceInfo()) {
@@ -777,8 +1082,8 @@ namespace details {
         result.elapsedTime = 0.0;
         
         // Get checkmark symbols
-        const char* successMark = getUseAsciiCheckmarks() ? "[OK]" : u8"✓";
-        const char* failMark = getUseAsciiCheckmarks() ? "[FAIL]" : u8"✗";
+        const char* successMark = getUseAsciiCheckmarks() ? "[OK]" : "✓";
+        const char* failMark = getUseAsciiCheckmarks() ? "[FAIL]" : "✗";
         
         // Show test name before execution if verbose mode is enabled
         if (getVerboseMode()) {
@@ -791,7 +1096,7 @@ namespace details {
             f();
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            result.elapsedTime = duration.count() / 1000.0; // Convert to milliseconds
+            result.elapsedTime = static_cast<double>(duration.count()) / 1000.0; // Convert to milliseconds
             
             std::cout << successMark << " Test [" << std::string(group) << "::" << std::string(name) << "] succeeded";
             if (getShowPerformanceInfo()) {
@@ -802,7 +1107,7 @@ namespace details {
         catch (const AssertionException &e) {
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            result.elapsedTime = duration.count() / 1000.0;
+            result.elapsedTime = static_cast<double>(duration.count()) / 1000.0;
             
             std::cout << failMark << " Test [" << std::string(group) << "::" << std::string(name) << "] failed!, error: " << e.getFormattedMessage();
             if (getShowPerformanceInfo()) {
@@ -816,7 +1121,7 @@ namespace details {
         catch (std::exception &e) {
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            result.elapsedTime = duration.count() / 1000.0;
+            result.elapsedTime = static_cast<double>(duration.count()) / 1000.0;
             
             std::cout << failMark << " Test [" << std::string(group) << "::" << std::string(name) << "] failed with unexpected exception!, error: " << e.what();
             if (getShowPerformanceInfo()) {
@@ -1148,8 +1453,8 @@ namespace details {
     auto& results = utest::details::getTestResults(); \
     int passed = 0, failed = 0; \
     double totalTime = 0.0; \
-    const char* successMark = utest::details::getUseAsciiCheckmarks() ? "[OK]" : u8"✓"; \
-    const char* failMark = utest::details::getUseAsciiCheckmarks() ? "[FAIL]" : u8"✗"; \
+    const char* successMark = utest::details::getUseAsciiCheckmarks() ? "[OK]" : "✓"; \
+    const char* failMark = utest::details::getUseAsciiCheckmarks() ? "[FAIL]" : "✗"; \
     if (results.empty()) { \
         std::cout << "No tests were run!\n"; \
         std::cout << "======================================\n"; \

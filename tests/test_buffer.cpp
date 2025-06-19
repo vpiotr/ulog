@@ -6,13 +6,13 @@ UTEST_FUNC_DEF2(Buffer, EnableDisable) {
     auto& logger = ulog::getLogger("BufferTest");
     
     // Initially no buffer
-    UTEST_ASSERT_EQUALS(logger.buffer(), nullptr);
+    UTEST_ASSERT_NULL(logger.buffer());
     
     logger.enable_buffer(100);
-    UTEST_ASSERT_NOT_EQUALS(logger.buffer(), nullptr);
+    UTEST_ASSERT_NOT_NULL(logger.buffer());
     
     logger.disable_buffer();
-    UTEST_ASSERT_EQUALS(logger.buffer(), nullptr);
+    UTEST_ASSERT_NULL(logger.buffer());
 }
 
 UTEST_FUNC_DEF2(Buffer, Storage) {
@@ -83,9 +83,9 @@ UTEST_FUNC_DEF2(Buffer, Iteration) {
     }
     
     UTEST_ASSERT_EQUALS(messages.size(), 3);
-    UTEST_ASSERT_EQUALS(messages[0], "First");
-    UTEST_ASSERT_EQUALS(messages[1], "Second");
-    UTEST_ASSERT_EQUALS(messages[2], "Third");
+    UTEST_ASSERT_STR_EQUALS(messages[0], "First");
+    UTEST_ASSERT_STR_EQUALS(messages[1], "Second");
+    UTEST_ASSERT_STR_EQUALS(messages[2], "Third");
 }
 
 UTEST_FUNC_DEF2(Buffer, ThreadSafety) {
