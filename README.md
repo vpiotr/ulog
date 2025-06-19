@@ -12,6 +12,7 @@ A fast, simple, and lightweight header-only C++ logging library with console out
 - **Header-only**: Single header file, no compilation required
 - **Fast & Lightweight**: <1000 LOC, optimized for speed and simplicity
 - **Thread-safe**: All operations are thread-safe
+- **UTF-8 Support**: Full Unicode support with automatic Windows console configuration
 - **Log level filtering**: Built-in filtering by severity level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF)
 - **Message suppliers**: Zero-cost abstraction for expensive log message calculations - suppliers only invoked when log level allows
 - **Flexible formatting**: Support for anonymous (`{?}`) and positional (`{0}`, `{1}`) parameters
@@ -654,3 +655,23 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 *For detailed API documentation, run `./build_docs.sh` to generate Doxygen documentation.*
+
+## Windows UTF-8 Support
+
+ulog provides automatic UTF-8 support on Windows with Visual Studio/MSVC:
+
+- **Automatic Console Setup**: Windows console is automatically configured for UTF-8 output
+- **Source File Encoding**: CMake configuration uses `/utf-8` flag for proper source encoding
+- **Unicode String Literals**: All Unicode characters use `u8` prefix for consistent encoding
+- **Cross-Platform**: Same code works identically on Windows, Linux, and macOS
+
+Example with Unicode characters:
+```cpp
+auto& logger = ulog::getLogger("Unicode");
+logger.info(u8"Status: ✓ Success, Temperature: 23.5°C");
+logger.info(u8"Internationalization: café, 你好, Ω α β");
+```
+
+See `WINDOWS_UTF8.md` for detailed implementation information and `demo_windows_utf8.cpp` for a comprehensive test.
+
+## Building and Testing

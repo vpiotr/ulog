@@ -368,7 +368,12 @@ public:
      * @param name Logger name (empty for global logger)
      */
     explicit Logger(const std::string& name = "") 
-        : name_(name), console_enabled_(true), buffer_enabled_(false), log_level_(LogLevel::INFO), clean_message_(true), utf8_handling_(DEFAULT_STR_IS_UTF8) {}
+        : name_(name), console_enabled_(true), buffer_enabled_(false), log_level_(LogLevel::INFO), clean_message_(true), utf8_handling_(DEFAULT_STR_IS_UTF8) {
+#ifdef _WIN32
+        // Ensure UTF-8 console is initialized on Windows
+        details::initialize_utf8_console();
+#endif
+    }
     
     /**
      * @brief Log trace message
@@ -1112,3 +1117,37 @@ inline Logger& getLogger(const std::string& name) {
 } // namespace ulog
 
 #endif // ULOG_ULOG_H
+
+// Windows UTF-8 console support
+#ifdef _WIN32
+#include <windows.h>
+#include <io.h>
+#include <fcntl.h>
+
+namespace ulog {
+namespace details {
+    /**
+     * @brief Initialize UTF-8 console output on Windows
+     * @return true if initialization was successful
+     */
+    inline bool initialize_utf8_console() {
+        static bool initialized = false;
+        if (!initialized) {
+            // Set console output code page to UTF-8
+            SetConsoleOutputCP(CP_UTF8);
+            SetConsoleCP(CP_UTF8);
+            
+            // For better UTF-8 support in console applications
+            // Note: We avoid _setmode as it can interfere with other output
+            // The /utf-8 compiler flag ensures proper source encoding
+            
+            initialized = true;
+        }
+        return true;
+    }
+    
+    // Ensure UTF-8 console is initialized
+    static bool utf8_console_init = initialize_utf8_console();
+}
+}
+#endif
