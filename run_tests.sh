@@ -45,10 +45,10 @@ for TEST_NAME in "${TEST_EXECUTABLES[@]}"; do
     
     # Run test and capture exit code
     if "$TEST_EXECUTABLE"; then
-        echo "✓ $TEST_NAME PASSED"
+        echo "PASS: $TEST_NAME"
         ((PASSED_TESTS++))
     else
-        echo "✗ $TEST_NAME FAILED"
+        echo "FAIL: $TEST_NAME"
         ((FAILED_TESTS++))
     fi
     

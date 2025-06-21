@@ -554,16 +554,16 @@ Define these macros **before** including `ulog.h`:
 ### Performance Trade-offs
 
 **With Mutexes (Default - Thread-Safe):**
-- ✅ Thread-safe console output
-- ✅ Thread-safe buffer operations  
-- ✅ Thread-safe observer notifications
-- ✅ No data races or corruption
-- ⚠️ Slight performance overhead in single-threaded scenarios
+- Thread-safe console output
+- Thread-safe buffer operations  
+- Thread-safe observer notifications
+- No data races or corruption
+- Slight performance overhead in single-threaded scenarios
 
 **Without Mutexes (Performance Optimized):**
-- ✅ Maximum performance in single-threaded scenarios
-- ⚠️ **NOT thread-safe** - only use in single-threaded applications
-- ⚠️ Undefined behavior if used from multiple threads
+- Maximum performance in single-threaded scenarios
+- **NOT thread-safe** - only use in single-threaded applications
+- Undefined behavior if used from multiple threads
 
 ### Benchmark Results
 
@@ -598,6 +598,7 @@ See the `demos/` directory for comprehensive examples:
 - `demos/demo_main.cpp` - Core functionality including basic logging, parameter formatting, memory buffer usage, observer pattern, console control, thread safety, and logger factory usage
 - `demos/demo_file_observer.cpp` - File output via observer pattern with RAII management and multiple observers
 - `demos/demo_log_level_filtering.cpp` - Log level filtering examples with buffers and observers
+- `demos/demo_message_supplier.cpp` - Message supplier examples demonstrating zero-cost abstraction for expensive log message calculations
 - `demos/demo_custom_formatting.cpp` - Custom formatting for both primitive and user-defined types including wrapper classes, operator<< overloads, template specialization, container support, and performance tips
 - `demos/demo_container_formatting.cpp` - Advanced container formatting examples with STL containers and custom types
 - `demos/demo_auto_flushing.cpp` - RAII auto-flushing scope examples including basic usage, nested scopes, multiple loggers, and exception safety
@@ -606,13 +607,17 @@ See the `demos/` directory for comprehensive examples:
 - `demos/demo_cerr_observer.cpp` - Error message redirection to stderr via observer pattern with multiple observer support, RAII management, and exception safety
 - `demos/demo_exception_formatting.cpp` - Automatic exception formatting with custom exception wrappers, nested exception handling, system error integration, and real-world scenarios
 - `demos/demo_ustr_integration.cpp` - Integration with external ustr.h library for enhanced string conversion capabilities
+- `demos/demo_buffer_assertions.cpp` - Buffer assertion utilities and debugging features for development environments
+- `demos/demo_buffer_stats.cpp` - Buffer statistics and monitoring capabilities for performance analysis
+- `demos/demo_threaded_buffer_stats.cpp` - Multi-threaded buffer statistics demonstration with concurrent logging
+- `demos/demo_windows_utf8.cpp` - Windows UTF-8 support demonstration with Unicode character handling
 
 ### Performance Benchmarks
 
-- `demos/benchmarks/demo_buffer_benchmark_with_mutex.cpp` - Buffer write performance benchmark with mutex protection enabled
-- `demos/benchmarks/demo_buffer_benchmark_no_mutex.cpp` - Buffer write performance benchmark with mutex protection disabled (single-threaded only)
-- `demos/benchmarks/demo_observer_benchmark_with_mutex.cpp` - Observer notification performance benchmark with mutex protection enabled
-- `demos/benchmarks/demo_observer_benchmark_no_mutex.cpp` - Observer notification performance benchmark with mutex protection disabled (single-threaded only)
+- `benchmarks/demo_buffer_benchmark_with_mutex.cpp` - Buffer write performance benchmark with mutex protection enabled
+- `benchmarks/demo_buffer_benchmark_no_mutex.cpp` - Buffer write performance benchmark with mutex protection disabled (single-threaded only)
+- `benchmarks/demo_observer_benchmark_with_mutex.cpp` - Observer notification performance benchmark with mutex protection enabled
+- `benchmarks/demo_observer_benchmark_no_mutex.cpp` - Observer notification performance benchmark with mutex protection disabled (single-threaded only)
 
 ## Contributing
 

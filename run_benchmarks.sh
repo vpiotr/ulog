@@ -59,10 +59,10 @@ run_benchmark() {
     
     if ./"$executable"; then
         echo ""
-        echo "✓ $executable completed successfully"
+        echo "SUCCESS: $executable completed successfully"
     else
         echo ""
-        echo "✗ $executable failed with exit code $?"
+        echo "FAILED: $executable failed with exit code $?"
         return 1
     fi
     

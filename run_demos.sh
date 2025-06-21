@@ -11,6 +11,7 @@ BUILD_DIR="$PROJECT_ROOT/build"
 MAIN_DEMO_EXECUTABLE="$BUILD_DIR/ulog_demo"
 FILE_OBSERVER_DEMO_EXECUTABLE="$BUILD_DIR/demo_file_observer"
 LOG_LEVEL_FILTERING_DEMO_EXECUTABLE="$BUILD_DIR/demo_log_level_filtering"
+MESSAGE_SUPPLIER_DEMO_EXECUTABLE="$BUILD_DIR/demo_message_supplier"
 CUSTOM_FORMATTING_DEMO_EXECUTABLE="$BUILD_DIR/demo_custom_formatting"
 AUTO_FLUSHING_DEMO_EXECUTABLE="$BUILD_DIR/demo_auto_flushing"
 DEBUG_SCOPE_DEMO_EXECUTABLE="$BUILD_DIR/demo_debug_scope"
@@ -22,6 +23,7 @@ USTR_INTEGRATION_DEMO_EXECUTABLE="$BUILD_DIR/demo_ustr_integration"
 THREADED_BUFFER_STATS_DEMO_EXECUTABLE="$BUILD_DIR/demo_threaded_buffer_stats"
 BUFFER_ASSERTIONS_DEMO_EXECUTABLE="$BUILD_DIR/demo_buffer_assertions"
 BUFFER_STATS_DEMO_EXECUTABLE="$BUILD_DIR/demo_buffer_stats"
+WINDOWS_UTF8_DEMO_EXECUTABLE="$BUILD_DIR/demo_windows_utf8"
 
 echo "=== ulog Demos Execution Script ==="
 
@@ -44,6 +46,11 @@ fi
 
 if [ ! -f "$LOG_LEVEL_FILTERING_DEMO_EXECUTABLE" ]; then
     echo "Error: Log level filtering demo executable not found. Please run ./rebuild.sh first."
+    exit 1
+fi
+
+if [ ! -f "$MESSAGE_SUPPLIER_DEMO_EXECUTABLE" ]; then
+    echo "Error: Message supplier demo executable not found. Please run ./rebuild.sh first."
     exit 1
 fi
 
@@ -102,10 +109,16 @@ if [ ! -f "$BUFFER_STATS_DEMO_EXECUTABLE" ]; then
     exit 1
 fi
 
+if [ ! -f "$WINDOWS_UTF8_DEMO_EXECUTABLE" ]; then
+    echo "Error: Windows UTF-8 demo executable not found. Please run ./rebuild.sh first."
+    exit 1
+fi
+
 echo "Running demos..."
 echo "Main demo executable: $MAIN_DEMO_EXECUTABLE"
 echo "File observer demo executable: $FILE_OBSERVER_DEMO_EXECUTABLE"
 echo "Log level filtering demo executable: $LOG_LEVEL_FILTERING_DEMO_EXECUTABLE"
+echo "Message supplier demo executable: $MESSAGE_SUPPLIER_DEMO_EXECUTABLE"
 echo "Custom formatting demo executable: $CUSTOM_FORMATTING_DEMO_EXECUTABLE"
 echo "Auto flushing demo executable: $AUTO_FLUSHING_DEMO_EXECUTABLE"
 echo "Debug scope demo executable: $DEBUG_SCOPE_DEMO_EXECUTABLE"
@@ -117,6 +130,7 @@ echo "Ustr integration demo executable: $USTR_INTEGRATION_DEMO_EXECUTABLE"
 echo "Threaded buffer stats demo executable: $THREADED_BUFFER_STATS_DEMO_EXECUTABLE"
 echo "Buffer assertions demo executable: $BUFFER_ASSERTIONS_DEMO_EXECUTABLE"
 echo "Buffer stats demo executable: $BUFFER_STATS_DEMO_EXECUTABLE"
+echo "Windows UTF-8 demo executable: $WINDOWS_UTF8_DEMO_EXECUTABLE"
 echo ""
 
 # Run main demo
@@ -137,6 +151,12 @@ echo "=== Running Log Level Filtering Demo ==="
 "$LOG_LEVEL_FILTERING_DEMO_EXECUTABLE"
 
 LOG_LEVEL_FILTERING_DEMO_RESULT=$?
+
+echo ""
+echo "=== Running Message Supplier Demo ==="
+"$MESSAGE_SUPPLIER_DEMO_EXECUTABLE"
+
+MESSAGE_SUPPLIER_DEMO_RESULT=$?
 
 echo ""
 echo "=== Running Custom Formatting Demo ==="
@@ -205,7 +225,13 @@ echo "=== Running Buffer Stats Demo ==="
 BUFFER_STATS_DEMO_RESULT=$?
 
 echo ""
-if [ $MAIN_DEMO_RESULT -eq 0 ] && [ $FILE_OBSERVER_DEMO_RESULT -eq 0 ] && [ $LOG_LEVEL_FILTERING_DEMO_RESULT -eq 0 ] && [ $CUSTOM_FORMATTING_DEMO_RESULT -eq 0 ] && [ $AUTO_FLUSHING_DEMO_RESULT -eq 0 ] && [ $DEBUG_SCOPE_DEMO_RESULT -eq 0 ] && [ $SLOW_OP_GUARD_DEMO_RESULT -eq 0 ] && [ $CERR_OBSERVER_DEMO_RESULT -eq 0 ] && [ $EXCEPTION_FORMATTING_DEMO_RESULT -eq 0 ] && [ $CONTAINER_FORMATTING_DEMO_RESULT -eq 0 ] && [ $USTR_INTEGRATION_DEMO_RESULT -eq 0 ] && [ $THREADED_BUFFER_STATS_DEMO_RESULT -eq 0 ] && [ $BUFFER_ASSERTIONS_DEMO_RESULT -eq 0 ] && [ $BUFFER_STATS_DEMO_RESULT -eq 0 ]; then
+echo "=== Running Windows UTF-8 Demo ==="
+"$WINDOWS_UTF8_DEMO_EXECUTABLE"
+
+WINDOWS_UTF8_DEMO_RESULT=$?
+
+echo ""
+if [ $MAIN_DEMO_RESULT -eq 0 ] && [ $FILE_OBSERVER_DEMO_RESULT -eq 0 ] && [ $LOG_LEVEL_FILTERING_DEMO_RESULT -eq 0 ] && [ $MESSAGE_SUPPLIER_DEMO_RESULT -eq 0 ] && [ $CUSTOM_FORMATTING_DEMO_RESULT -eq 0 ] && [ $AUTO_FLUSHING_DEMO_RESULT -eq 0 ] && [ $DEBUG_SCOPE_DEMO_RESULT -eq 0 ] && [ $SLOW_OP_GUARD_DEMO_RESULT -eq 0 ] && [ $CERR_OBSERVER_DEMO_RESULT -eq 0 ] && [ $EXCEPTION_FORMATTING_DEMO_RESULT -eq 0 ] && [ $CONTAINER_FORMATTING_DEMO_RESULT -eq 0 ] && [ $USTR_INTEGRATION_DEMO_RESULT -eq 0 ] && [ $THREADED_BUFFER_STATS_DEMO_RESULT -eq 0 ] && [ $BUFFER_ASSERTIONS_DEMO_RESULT -eq 0 ] && [ $BUFFER_STATS_DEMO_RESULT -eq 0 ] && [ $WINDOWS_UTF8_DEMO_RESULT -eq 0 ]; then
     echo "=== All demos completed successfully! ==="
     echo ""
     echo "Generated log files from file observer demo:"
@@ -231,6 +257,7 @@ else
     echo "Main demo exit code: $MAIN_DEMO_RESULT"
     echo "File observer demo exit code: $FILE_OBSERVER_DEMO_RESULT"
     echo "Log level filtering demo exit code: $LOG_LEVEL_FILTERING_DEMO_RESULT"
+    echo "Message supplier demo exit code: $MESSAGE_SUPPLIER_DEMO_RESULT"
     echo "Custom formatting demo exit code: $CUSTOM_FORMATTING_DEMO_RESULT"
     echo "Auto flushing demo exit code: $AUTO_FLUSHING_DEMO_RESULT"
     echo "Debug scope demo exit code: $DEBUG_SCOPE_DEMO_RESULT"
@@ -242,5 +269,6 @@ else
     echo "Threaded buffer stats demo exit code: $THREADED_BUFFER_STATS_DEMO_RESULT"
     echo "Buffer assertions demo exit code: $BUFFER_ASSERTIONS_DEMO_RESULT"
     echo "Buffer stats demo exit code: $BUFFER_STATS_DEMO_RESULT"
+    echo "Windows UTF-8 demo exit code: $WINDOWS_UTF8_DEMO_RESULT"
     exit 1
 fi
